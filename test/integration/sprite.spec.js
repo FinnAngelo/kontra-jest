@@ -25,13 +25,13 @@ describe('sprite integration', () => {
     let sprite3 = Sprite();
     sprite3.animations = spriteSheet.animations;
 
-    expect(sprite1.animations.walk).to.not.equal(
+    expect(sprite1.animations.walk).not.toBe(
       sprite2.animations.walk
     );
-    expect(sprite1.animations.walk).to.not.equal(
+    expect(sprite1.animations.walk).not.toBe(
       sprite3.animations.walk
     );
-    expect(sprite2.animations.walk).to.not.equal(
+    expect(sprite2.animations.walk).not.toBe(
       sprite3.animations.walk
     );
 
@@ -39,9 +39,9 @@ describe('sprite integration', () => {
       sprite1.update();
     }
 
-    expect(sprite1.animations.walk._f).to.equal(3);
-    expect(sprite2.animations.walk._f).to.equal(0);
-    expect(sprite3.animations.walk._f).to.equal(0);
+    expect(sprite1.animations.walk._f).toBe(3);
+    expect(sprite2.animations.walk._f).toBe(0);
+    expect(sprite3.animations.walk._f).toBe(0);
   });
 
   it('should not corrupt frames when playing animation', () => {
@@ -74,14 +74,14 @@ describe('sprite integration', () => {
       sprite1.update();
     }
 
-    expect(sprite1.animations.walk._f).to.equal(3);
-    expect(sprite2.animations.walk._f).to.equal(0);
-    expect(sprite3.animations.walk._f).to.equal(0);
+    expect(sprite1.animations.walk._f).toBe(3);
+    expect(sprite2.animations.walk._f).toBe(0);
+    expect(sprite3.animations.walk._f).toBe(0);
   });
 
   it('should render when tracked by pointer', () => {
     initPointer();
-    let spy = sinon.spy();
+    let spy = jest.fn();
 
     let sprite = Sprite({
       x: 100,
@@ -94,9 +94,9 @@ describe('sprite integration', () => {
     sprite.render();
 
     // retain _r as radius
-    expect(typeof sprite._r).to.not.equal('function');
+    expect(typeof sprite._r).not.toBe('function');
 
     // retain _rf as render function
-    expect(sprite._rf).to.equal(spy);
+    expect(sprite._rf).toBe(spy);
   });
 });

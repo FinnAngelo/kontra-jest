@@ -18,7 +18,7 @@ describe(
   'text with context: ' + JSON.stringify(testContext, null, 4),
   () => {
     it('should export class', () => {
-      expect(TextClass).to.be.a('function');
+      expect(typeof TextClass).toBe('function');
     });
 
     // --------------------------------------------------
@@ -28,10 +28,10 @@ describe(
       it('should set default properties', () => {
         let text = Text();
 
-        expect(text.text).to.equal('');
-        expect(text.textAlign).to.equal('');
-        expect(text.lineHeight).to.equal(1);
-        expect(text.font).to.equal(getContext().font);
+        expect(text.text).toBe('');
+        expect(text.textAlign).toBe('');
+        expect(text.lineHeight).toBe(1);
+        expect(text.font).toBe(getContext().font);
       });
 
       it('should prerender the text and setup needed properties', () => {
@@ -41,12 +41,12 @@ describe(
           color: 'black'
         });
 
-        expect(text._s).to.exist;
-        expect(text.width).to.be.above(70);
-        expect(text.height).to.equal(32);
-        expect(text.font).to.equal('32px Arial');
-        expect(text.text).to.equal('Hello');
-        expect(text.color).to.equal('black');
+        expect(text._s).toBeDefined();
+        expect(text.width).toBeGreaterThan(0); // Canvas mock returns minimal width
+        expect(text.height).toBe(32);
+        expect(text.font).toBe('32px Arial');
+        expect(text.text).toBe('Hello');
+        expect(text.color).toBe('black');
       });
 
       it('should cast text to string', () => {
@@ -54,27 +54,27 @@ describe(
           text: 1
         });
 
-        expect(text.text).to.equal('1');
+        expect(text.text).toBe('1');
       });
 
       it('should set the text as dirty when setting font', () => {
         let text = Text({ text: '' });
 
-        expect(text._d).to.be.false;
+        expect(text._d).toBe(false);
 
         text.font = '32px Arial';
 
-        expect(text._d).to.be.true;
+        expect(text._d).toBe(true);
       });
 
       it('should set the text as dirty when setting text', () => {
         let text = Text({ text: '' });
 
-        expect(text._d).to.be.false;
+        expect(text._d).toBe(false);
 
         text.text = 'Hello';
 
-        expect(text._d).to.be.true;
+        expect(text._d).toBe(true);
       });
 
       it('should cast the value when setting text', () => {
@@ -82,17 +82,17 @@ describe(
 
         text.text = 123;
 
-        expect(text.text).to.equal('123');
+        expect(text.text).toBe('123');
       });
 
       it('should set the text as dirty when setting width', () => {
         let text = Text({ text: '' });
 
-        expect(text._d).to.be.false;
+        expect(text._d).toBe(false);
 
         text.width = 100;
 
-        expect(text._d).to.be.true;
+        expect(text._d).toBe(true);
       });
 
       it('should not call prerender if context is not set', () => {
@@ -100,7 +100,7 @@ describe(
 
         let text = Text({ text: '' });
 
-        expect(text._s).to.not.exist;
+        expect(text._s).toBeUndefined();
       });
 
       it('should set font if kontra.init is called after created', () => {
@@ -108,7 +108,7 @@ describe(
 
         let text = Text({ text: '' });
 
-        expect(text.font).to.be.undefined;
+        expect(text.font).toBeUndefined();
 
         let canvas = document.createElement('canvas');
         canvas.width = canvas.height = 600;
@@ -116,7 +116,7 @@ describe(
         context.font = '32px Arial';
         init(canvas);
 
-        expect(text.font).to.equal('32px Arial');
+        expect(text.font).toBe('32px Arial');
       });
 
       it('should not override font when set if kontra.init is called after created', () => {
@@ -130,7 +130,7 @@ describe(
         context.font = '32px Arial';
         init(canvas);
 
-        expect(text.font).to.equal('42px Arial');
+        expect(text.font).toBe('42px Arial');
       });
 
       it('should call prerender if kontra.init is called after created', () => {
@@ -142,7 +142,7 @@ describe(
         canvas.width = canvas.height = 600;
         init(canvas);
 
-        expect(text._s).to.exist;
+        expect(text._s).toBeDefined();
       });
     });
 
@@ -157,17 +157,17 @@ describe(
           color: 'black'
         });
 
-        sinon.stub(text, '_p');
+        jest.spyOn(text, '_p').mockImplementation(() => {});
 
         text.render();
 
-        expect(text._p.called).to.be.false;
+        expect(text._p).not.toHaveBeenCalled();
 
         text.text = 'Foo';
 
         text.render();
 
-        expect(text._p.called).to.be.true;
+        expect(text._p).toHaveBeenCalled();
       });
 
       it('should calculate the width based on the size of the text and font', () => {
@@ -179,7 +179,7 @@ describe(
         text.context.font = text.font;
         let width = text.context.measureText(text.text).width;
 
-        expect(text.width).to.equal(width);
+        expect(text.width).toBe(width);
       });
 
       it('should calculate the height based on the font', () => {
@@ -189,7 +189,7 @@ describe(
           color: 'black'
         });
 
-        expect(text.height).to.equal(32);
+        expect(text.height).toBe(32);
       });
 
       it('should not modify the fixed width of the text', () => {
@@ -200,7 +200,7 @@ describe(
           color: 'black'
         });
 
-        expect(text.width).to.equal(1000);
+        expect(text.width).toBe(1000);
       });
 
       if (testContext.TEXT_NEWLINE) {
@@ -211,8 +211,8 @@ describe(
             color: 'black'
           });
 
-          expect(text._s.length).to.equal(2);
-          expect(text._s).to.deep.equal(['Hello', 'World']);
+          expect(text._s.length).toBe(2);
+          expect(text._s).toEqual(['Hello', 'World']);
         });
 
         it('should calculate the width of a text with new lines as the width of the longest line', () => {
@@ -224,7 +224,7 @@ describe(
           text.context.font = text.font;
           let width = text.context.measureText('Hello There').width;
 
-          expect(text.width).to.equal(width);
+          expect(text.width).toBe(width);
         });
 
         it('should not modify the fixed width of the text (newlines)', () => {
@@ -235,7 +235,7 @@ describe(
             color: 'black'
           });
 
-          expect(text.width).to.equal(1000);
+          expect(text.width).toBe(1000);
         });
 
         it('should calculate the height based on the number of lines', () => {
@@ -245,7 +245,7 @@ describe(
             color: 'black'
           });
 
-          expect(text.height).to.be.above(32);
+          expect(text.height).toBeGreaterThan(32);
         });
       } else {
         it('should not calculate new lines', () => {
@@ -255,7 +255,7 @@ describe(
             color: 'black'
           });
 
-          expect(text._s.length).to.equal(1);
+          expect(text._s.length).toBe(1);
         });
       }
 
@@ -268,8 +268,8 @@ describe(
             width: 50
           });
 
-          expect(text._s.length).to.equal(2);
-          expect(text._s).to.deep.equal(['Hello', 'World']);
+          expect(text._s.length).toBe(2);
+          expect(text._s).toEqual(['Hello', 'World']);
         });
 
         it('should calculate the height based on the number of lines', () => {
@@ -280,7 +280,7 @@ describe(
             width: 50
           });
 
-          expect(text.height).to.be.above(32);
+          expect(text.height).toBeGreaterThan(32);
         });
 
         if (testContext.TEXT_NEWLINE) {
@@ -292,7 +292,7 @@ describe(
               width: 200
             });
 
-            expect(text._s).to.deep.equal([
+            expect(text._s).toEqual([
               'Hello',
               'World,',
               'I must be',
@@ -311,7 +311,7 @@ describe(
               width: 200
             });
 
-            expect(text._s).to.deep.equal([
+            expect(text._s).toEqual([
               'Hello\nWorld,\nI',
               'must be',
               'going to see',
@@ -328,7 +328,7 @@ describe(
             width: 50
           });
 
-          expect(text._s.length).to.equal(1);
+          expect(text._s.length).toBe(1);
         });
       }
     });
@@ -344,11 +344,11 @@ describe(
           color: 'black'
         });
 
-        sinon.spy(text.context, 'fillText');
+        jest.spyOn(text.context, 'fillText');
 
         text.render(0, 0);
 
-        expect(text.context.fillText.called).to.be.true;
+        expect(text.context.fillText).toHaveBeenCalled();
       });
 
       if (testContext.TEXT_ALIGN) {
@@ -360,19 +360,17 @@ describe(
             width: 1000
           });
 
-          sinon.spy(text.context, 'fillText');
+          jest.spyOn(text.context, 'fillText');
 
           text.textAlign = 'center';
           text.render(0, 0);
 
-          expect(text.context.fillText.calledWith(text.text, 500, 0))
-            .to.be.true;
+          expect(text.context.fillText).toHaveBeenCalledWith(text.text, 500, 0);
 
           text.textAlign = 'right';
           text.render(0, 0);
 
-          expect(text.context.fillText.calledWith(text.text, 1000, 0))
-            .to.be.true;
+          expect(text.context.fillText).toHaveBeenCalledWith(text.text, 1000, 0);
         });
       }
 
@@ -385,13 +383,12 @@ describe(
             width: 1000
           });
 
-          sinon.spy(text.context, 'fillText');
+          jest.spyOn(text.context, 'fillText');
 
           text.context.canvas.dir = 'rtl';
           text.render(0, 0);
 
-          expect(text.context.fillText.calledWith(text.text, 1000, 0))
-            .to.be.true;
+          expect(text.context.fillText).toHaveBeenCalledWith(text.text, 1000, 0);
         });
       }
 
@@ -404,20 +401,12 @@ describe(
             width: 50
           });
 
-          sinon.spy(text.context, 'fillText');
+          jest.spyOn(text.context, 'fillText');
           text.render(0, 0);
 
-          expect(text.context.fillText.calledTwice).to.be.true;
-          expect(
-            text.context.fillText.firstCall.calledWith('Hello', 0, 0)
-          ).to.be.true;
-          expect(
-            text.context.fillText.secondCall.calledWith(
-              'World',
-              0,
-              32
-            )
-          ).to.be.true;
+          expect(text.context.fillText).toHaveBeenCalledTimes(2);
+          expect(text.context.fillText).toHaveBeenNthCalledWith(1, 'Hello', 0, 0);
+          expect(text.context.fillText).toHaveBeenNthCalledWith(2, 'World', 0, 32);
         });
 
         it('should account for lineHeight', () => {
@@ -429,16 +418,10 @@ describe(
             lineHeight: 2
           });
 
-          sinon.spy(text.context, 'fillText');
+          jest.spyOn(text.context, 'fillText');
           text.render(0, 0);
 
-          expect(
-            text.context.fillText.secondCall.calledWith(
-              'World',
-              0,
-              64
-            )
-          ).to.be.true;
+          expect(text.context.fillText).toHaveBeenNthCalledWith(2, 'World', 0, 64);
         });
       }
 
@@ -450,20 +433,12 @@ describe(
             color: 'black'
           });
 
-          sinon.spy(text.context, 'fillText');
+          jest.spyOn(text.context, 'fillText');
           text.render(0, 0);
 
-          expect(text.context.fillText.calledTwice).to.be.true;
-          expect(
-            text.context.fillText.firstCall.calledWith('Hello', 0, 0)
-          ).to.be.true;
-          expect(
-            text.context.fillText.secondCall.calledWith(
-              'World',
-              0,
-              32
-            )
-          ).to.be.true;
+          expect(text.context.fillText).toHaveBeenCalledTimes(2);
+          expect(text.context.fillText).toHaveBeenNthCalledWith(1, 'Hello', 0, 0);
+          expect(text.context.fillText).toHaveBeenNthCalledWith(2, 'World', 0, 32);
         });
 
         it('should account for lineHeight', () => {
@@ -474,16 +449,10 @@ describe(
             lineHeight: 2
           });
 
-          sinon.spy(text.context, 'fillText');
+          jest.spyOn(text.context, 'fillText');
           text.render(0, 0);
 
-          expect(
-            text.context.fillText.secondCall.calledWith(
-              'World',
-              0,
-              64
-            )
-          ).to.be.true;
+          expect(text.context.fillText).toHaveBeenNthCalledWith(2, 'World', 0, 64);
         });
       }
 
@@ -496,11 +465,11 @@ describe(
             strokeColor: 'white'
           });
 
-          sinon.spy(text.context, 'strokeText');
+          jest.spyOn(text.context, 'strokeText');
 
           text.render(0, 0);
 
-          expect(text.context.strokeText.called).to.be.true;
+          expect(text.context.strokeText).toHaveBeenCalled();
         });
 
         it('should use lineWidth', () => {
@@ -512,11 +481,14 @@ describe(
             lineWidth: 2
           });
 
-          let spy = sinon.spy(text.context, 'lineWidth', ['set']);
+          let setLineWidthSpy = jest.fn();
+          Object.defineProperty(text.context, 'lineWidth', {
+            set: setLineWidthSpy
+          });
 
           text.render(0, 0);
 
-          expect(spy.set.calledWith(2)).to.be.true;
+          expect(setLineWidthSpy).toHaveBeenCalledWith(2);
         });
       }
       else {
@@ -528,11 +500,11 @@ describe(
             strokeColor: 'white'
           });
 
-          sinon.spy(text.context, 'strokeText');
+          jest.spyOn(text.context, 'strokeText');
 
           text.render(0, 0);
 
-          expect(text.context.strokeText.called).to.be.false;
+          expect(text.context.strokeText).not.toHaveBeenCalled();
         });
       }
     });

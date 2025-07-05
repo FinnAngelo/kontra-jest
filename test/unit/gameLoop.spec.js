@@ -23,7 +23,7 @@ describe('gameLoop', () => {
         GameLoop();
       }
 
-      expect(func).to.throw();
+      expect(func).toThrow();
     });
 
     it('should set context if kontra.init is called after created', () => {
@@ -33,13 +33,13 @@ describe('gameLoop', () => {
         render: noop
       });
 
-      expect(loop.context).to.be.undefined;
+      expect(loop.context).toBeUndefined();
 
       let canvas = document.createElement('canvas');
       canvas.width = canvas.height = 600;
       init(canvas);
 
-      expect(loop.context).to.equal(canvas.getContext('2d'));
+      expect(loop.context).toBe(canvas.getContext('2d'));
     });
 
     it('should not override context when set if kontra.init is called after created', () => {
@@ -54,7 +54,7 @@ describe('gameLoop', () => {
       canvas.width = canvas.height = 600;
       init(canvas);
 
-      expect(loop.context).to.equal(true);
+      expect(loop.context).toBe(true);
     });
   });
 
@@ -63,7 +63,7 @@ describe('gameLoop', () => {
   // --------------------------------------------------
   describe('start', () => {
     it('should call requestAnimationFrame', () => {
-      sinon.stub(window, 'requestAnimationFrame').callsFake(noop);
+      const spy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation(noop);
 
       loop = GameLoop({
         render: noop,
@@ -72,18 +72,19 @@ describe('gameLoop', () => {
 
       loop.start();
 
-      expect(window.requestAnimationFrame.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
     });
 
     it('should unset isStopped', () => {
       loop.isStopped = true;
       loop.start();
 
-      expect(loop.isStopped).to.be.false;
+      expect(loop.isStopped).toBe(false);
     });
 
     it('should call requestAnimationFrame only once if called twice', () => {
-      sinon.stub(window, 'requestAnimationFrame').callsFake(noop);
+      const spy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation(noop);
 
       loop = GameLoop({
         render: noop,
@@ -93,7 +94,8 @@ describe('gameLoop', () => {
       loop.start();
       loop.start();
 
-      expect(window.requestAnimationFrame.calledOnce).to.be.true;
+      expect(spy).toHaveBeenCalledTimes(1);
+      spy.mockRestore();
     });
   });
 
@@ -102,7 +104,7 @@ describe('gameLoop', () => {
   // --------------------------------------------------
   describe('stop', () => {
     it('should call cancelAnimationFrame', () => {
-      sinon.stub(window, 'cancelAnimationFrame').callsFake(noop);
+      const spy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(noop);
 
       loop = GameLoop({
         render: noop,
@@ -111,14 +113,15 @@ describe('gameLoop', () => {
 
       loop.stop();
 
-      expect(window.cancelAnimationFrame.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
     });
 
     it('should set isStopped', () => {
       loop.isStopped = false;
       loop.stop();
 
-      expect(loop.isStopped).to.be.true;
+      expect(loop.isStopped).toBe(true);
     });
   });
 
@@ -127,8 +130,9 @@ describe('gameLoop', () => {
   // --------------------------------------------------
   describe('frame', () => {
     it('should call the update function and pass it dt', done => {
+      const updateSpy = jest.fn();
       loop = GameLoop({
-        update: sinon.spy(),
+        update: updateSpy,
         render: noop,
         clearCanvas: false
       });
@@ -136,22 +140,23 @@ describe('gameLoop', () => {
       loop.start();
 
       setTimeout(() => {
-        expect(loop.update.called).to.be.true;
-        expect(loop.update.getCall(0).args[0]).to.equal(1 / 60);
+        expect(updateSpy).toHaveBeenCalled();
+        expect(updateSpy.mock.calls[0][0]).toBe(1 / 60);
         done();
       }, 250);
     });
 
     it('should call the render function', done => {
+      const renderSpy = jest.fn();
       loop = GameLoop({
-        render: sinon.spy(),
+        render: renderSpy,
         clearCanvas: false
       });
 
       loop.start();
 
       setTimeout(() => {
-        expect(loop.render.called).to.be.true;
+        expect(renderSpy).toHaveBeenCalled();
         done();
       }, 250);
     });
@@ -170,7 +175,7 @@ describe('gameLoop', () => {
       loop._last = performance.now() - 1500;
       loop._frame();
 
-      expect(count).to.equal(0);
+      expect(count).toBe(0);
     });
 
     it('should make multiple calls to the update function if enough time has elapsed', () => {
@@ -187,7 +192,7 @@ describe('gameLoop', () => {
       loop._last = performance.now() - (1e3 / 60) * 2.5;
       loop._frame();
 
-      expect(count).to.equal(2);
+      expect(count).toBe(2);
     });
 
     it('should change the frame rate if passed fps', () => {
@@ -205,7 +210,7 @@ describe('gameLoop', () => {
       loop._last = performance.now() - (1e3 / 60) * 2.5;
       loop._frame();
 
-      expect(count).to.equal(1);
+      expect(count).toBe(1);
     });
 
     it('should call clearCanvas by default', () => {
@@ -214,12 +219,13 @@ describe('gameLoop', () => {
       });
       let context = getContext();
 
-      sinon.stub(context, 'clearRect').callsFake(noop);
+      const spy = jest.spyOn(context, 'clearRect').mockImplementation(noop);
 
       loop._last = performance.now() - 1e3 / 60;
       loop._frame();
 
-      expect(context.clearRect.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
     });
 
     it('should not clear the canvas if clearCanvas is false', () => {
@@ -229,21 +235,23 @@ describe('gameLoop', () => {
       });
       let context = getContext();
 
-      sinon.stub(context, 'clearRect').callsFake(noop);
+      const spy = jest.spyOn(context, 'clearRect').mockImplementation(noop);
 
       loop._last = performance.now() - 1e3 / 60;
       loop._frame();
 
-      expect(context.clearRect.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
+      spy.mockRestore();
     });
 
     it('should call clearCanvas on the passed in context', () => {
+      const clearRectSpy = jest.fn();
       let context = {
         canvas: {
           width: 0,
           height: 0
         },
-        clearRect: sinon.stub().callsFake(noop)
+        clearRect: clearRectSpy
       };
 
       loop = GameLoop({
@@ -254,11 +262,11 @@ describe('gameLoop', () => {
       loop._last = performance.now() - 1e3 / 60;
       loop._frame();
 
-      expect(context.clearRect.called).to.be.true;
+      expect(clearRectSpy).toHaveBeenCalled();
     });
 
     it('should emit the tick event', () => {
-      let spy = sinon.spy();
+      const spy = jest.fn();
       on('tick', spy);
 
       loop = GameLoop({
@@ -267,11 +275,11 @@ describe('gameLoop', () => {
       loop._last = performance.now() - 1001 / 60;
       loop._frame();
 
-      expect(spy.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should emit the tick event for each loop update', () => {
-      let spy = sinon.spy();
+      const spy = jest.fn();
       on('tick', spy);
 
       loop = GameLoop({
@@ -280,7 +288,7 @@ describe('gameLoop', () => {
       loop._last = performance.now() - 2001 / 60;
       loop._frame();
 
-      expect(spy.calledTwice).to.be.true;
+      expect(spy).toHaveBeenCalledTimes(2);
     });
 
     it('should not update if page is blurred', done => {
@@ -297,11 +305,12 @@ describe('gameLoop', () => {
       setTimeout(done, 100);
     });
 
-    it('should update if page is blurred when blur is true', done => {
+    it('should update if page is blurred when blur is true', () => {
+      let updateCalled = false;
       loop = GameLoop({
         blur: true,
         update() {
-          done();
+          updateCalled = true;
         },
         render: noop
       });
@@ -309,7 +318,7 @@ describe('gameLoop', () => {
       loop._last = performance.now() - Math.ceil(1e3 / 60);
       loop._frame();
 
-      throw new Error('should not get here');
+      expect(updateCalled).toBe(true);
     });
   });
 });

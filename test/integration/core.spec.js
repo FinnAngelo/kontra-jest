@@ -47,18 +47,18 @@ describe('core integration', () => {
       objects: [sprite, text]
     });
 
-    expect(() => scene.lookAt(sprite)).to.not.throw();
+    expect(() => scene.lookAt(sprite)).not.toThrow();
 
     let canvas = document.createElement('canvas');
     canvas.width = canvas.height = 600;
     init(canvas);
 
-    expect(() => sprite.render()).to.not.throw();
-    expect(() => text.render()).to.not.throw();
-    expect(() => tileEngine.render()).to.not.throw();
-    expect(() => scene.render()).to.not.throw();
+    expect(() => sprite.render()).not.toThrow();
+    expect(() => text.render()).not.toThrow();
+    expect(() => tileEngine.render()).not.toThrow();
+    expect(() => scene.render()).not.toThrow();
 
     loop._last = performance.now() - (1e3 / 60) * 2.5;
-    expect(() => loop._frame()).to.not.throw();
+    expect(() => loop._frame()).not.toThrow();
   });
 });

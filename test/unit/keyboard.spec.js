@@ -14,7 +14,7 @@ describe('keyboard', () => {
     // full keyMap api is only exported after initKeys
     keyboard.initKeys();
 
-    expect(keyboard.keyMap).to.deep.equal({
+    expect(keyboard.keyMap).toEqual({
       Enter: 'enter',
       Escape: 'esc',
       Space: 'space',
@@ -70,10 +70,10 @@ describe('keyboard', () => {
       Digit9: '9'
     });
 
-    expect(keyboard.initKeys).to.be.an('function');
-    expect(keyboard.onKey).to.be.an('function');
-    expect(keyboard.offKey).to.be.an('function');
-    expect(keyboard.keyPressed).to.be.an('function');
+    expect(keyboard.initKeys).toEqual(expect.any(Function));
+    expect(keyboard.onKey).toEqual(expect.any(Function));
+    expect(keyboard.offKey).toEqual(expect.any(Function));
+    expect(keyboard.keyPressed).toEqual(expect.any(Function));
   });
 
   // --------------------------------------------------
@@ -81,11 +81,13 @@ describe('keyboard', () => {
   // --------------------------------------------------
   describe('initKeys', () => {
     it('should add event listeners', () => {
-      let spy = sinon.spy(window, 'addEventListener');
+      const spy = jest.spyOn(window, 'addEventListener');
 
       keyboard.initKeys();
 
-      expect(spy.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
+      
+      spy.mockRestore();
     });
   });
 
@@ -94,28 +96,28 @@ describe('keyboard', () => {
   // --------------------------------------------------
   describe('pressed', () => {
     it('should return false when a key is not pressed', () => {
-      expect(keyboard.keyPressed('a')).to.be.false;
-      expect(keyboard.keyPressed('f1')).to.be.false;
-      expect(keyboard.keyPressed('numpad0')).to.be.false;
+      expect(keyboard.keyPressed('a')).toBe(false);
+      expect(keyboard.keyPressed('f1')).toBe(false);
+      expect(keyboard.keyPressed('numpad0')).toBe(false);
     });
 
     it('should return true for a single key', () => {
       simulateEvent('keydown', { code: 'KeyA' });
 
-      expect(keyboard.keyPressed('a')).to.be.true;
+      expect(keyboard.keyPressed('a')).toBe(true);
     });
 
     it('should return false if the key is no longer pressed', () => {
       simulateEvent('keydown', { code: 'KeyA' });
       simulateEvent('keyup', { code: 'KeyA' });
 
-      expect(keyboard.keyPressed('a')).to.be.false;
+      expect(keyboard.keyPressed('a')).toBe(false);
     });
 
     it('should accept an array of key combinations', () => {
       simulateEvent('keydown', { code: 'KeyC' });
 
-      expect(keyboard.keyPressed(['a','b','c'])).to.be.true;
+      expect(keyboard.keyPressed(['a','b','c'])).toBe(true);
     });
   });
 
@@ -171,29 +173,29 @@ describe('keyboard', () => {
     });
 
     describe('preventDefault=true', () => {
-      it('should call preventDefault on the event', done => {
+      it('should call preventDefault on the event', (done) => {
         keyboard.initKeys();
-        let spy;
 
         keyboard.onKey('a', () => {
-          expect(spy.called).to.be.true;
+          expect(mockPreventDefault).toHaveBeenCalled();
           done();
         });
 
-        let event = simulateEvent('keydown', {
+        const mockPreventDefault = jest.fn();
+        const event = simulateEvent('keydown', {
           code: 'KeyA',
           async: true
         });
-        spy = sinon.spy(event, 'preventDefault');
+        event.preventDefault = mockPreventDefault;
       });
     });
 
     describe('preventDefault=false', () => {
-      it('should not call preventDefault on the event', done => {
+      it('should not call preventDefault on the event', (done) => {
         keyboard.onKey(
           'a',
           evt => {
-            expect(evt.defaultPrevented).to.be.false;
+            expect(evt.defaultPrevented).toBe(false);
             done();
           },
           { preventDefault: false }
@@ -211,28 +213,26 @@ describe('keyboard', () => {
     // Defaults to keydown
     describe('handler=keydown', () => {
       it('should not call the callback when the combination has been unregistered', () => {
-        keyboard.onKey('a', () => {
-          // this should never be called since the key combination
-          // was unregistered
-          expect(false).to.be.true;
-        });
+        const callback = jest.fn();
+        keyboard.onKey('a', callback);
 
         keyboard.offKey('a');
 
         simulateEvent('keydown', { which: 65 });
+        
+        expect(callback).not.toHaveBeenCalled();
       });
 
       it('should accept an array of key combinations to unregister', () => {
-        keyboard.onKey(['a', 'b'], () => {
-          // this should never be called since the key combination
-          // was unregistered
-          expect(false).to.be.true;
-        });
+        const callback = jest.fn();
+        keyboard.onKey(['a', 'b'], callback);
 
         keyboard.offKey(['a', 'b']);
 
         simulateEvent('keydown', { which: 65 });
         simulateEvent('keydown', { which: 66 });
+        
+        expect(callback).not.toHaveBeenCalled();
       });
     });
 
@@ -240,36 +240,34 @@ describe('keyboard', () => {
       const handler = 'keyup';
 
       it('should not call the callback when the combination has been unregistered', () => {
+        const callback = jest.fn();
         keyboard.onKey(
           'a',
-          () => {
-            // this should never be called since the key combination
-            // was unregistered
-            expect(false).to.be.true;
-          },
-          handler
+          callback,
+          { handler }
         );
 
         keyboard.offKey('a');
 
         simulateEvent('keyup', { which: 65 });
+        
+        expect(callback).not.toHaveBeenCalled();
       });
 
       it('should accept an array of key combinations to unregister', () => {
+        const callback = jest.fn();
         keyboard.onKey(
           ['a', 'b'],
-          () => {
-            // this should never be called since the key combination
-            // was unregistered
-            expect(false).to.be.true;
-          },
-          handler
+          callback,
+          { handler }
         );
 
         keyboard.offKey(['a', 'b']);
 
         simulateEvent('keyup', { which: 65 });
         simulateEvent('keyup', { which: 66 });
+        
+        expect(callback).not.toHaveBeenCalled();
       });
     });
   });

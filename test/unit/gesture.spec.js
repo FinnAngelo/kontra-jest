@@ -13,14 +13,14 @@ describe('gesture', () => {
   });
 
   it('should export api', () => {
-    expect(Object.keys(gesture.gestureMap)).to.deep.equal([
+    expect(Object.keys(gesture.gestureMap)).toEqual([
       'swipe',
       'pinch'
     ]);
 
-    expect(gesture.initGesture).to.be.an('function');
-    expect(gesture.onGesture).to.be.an('function');
-    expect(gesture.offGesture).to.be.an('function');
+    expect(gesture.initGesture).toEqual(expect.any(Function));
+    expect(gesture.onGesture).toEqual(expect.any(Function));
+    expect(gesture.offGesture).toEqual(expect.any(Function));
   });
 
   // --------------------------------------------------
@@ -28,21 +28,21 @@ describe('gesture', () => {
   // --------------------------------------------------
   describe('initGesture', () => {
     it('should listen for touchChanged and touchEnd', () => {
-      expect(eventCallbacks.touchChanged).to.not.exist;
-      expect(eventCallbacks.touchEnd).to.not.exist;
+      expect(eventCallbacks.touchChanged).toBeUndefined();
+      expect(eventCallbacks.touchEnd).toBeUndefined();
 
       gesture.initGesture();
 
-      expect(eventCallbacks.touchChanged).to.exist;
-      expect(eventCallbacks.touchEnd).to.exist;
+      expect(eventCallbacks.touchChanged).toBeDefined();
+      expect(eventCallbacks.touchEnd).toBeDefined();
     });
 
     it('should only listen to events once', () => {
       gesture.initGesture();
       gesture.initGesture();
 
-      expect(eventCallbacks.touchChanged.length).to.equal(1);
-      expect(eventCallbacks.touchEnd.length).to.equal(1);
+      expect(eventCallbacks.touchChanged.length).toBe(1);
+      expect(eventCallbacks.touchEnd.length).toBe(1);
     });
   });
 
@@ -57,14 +57,14 @@ describe('gesture', () => {
     it('should add the listener to callbacks', () => {
       function foo() {}
       gesture.onGesture('swipeleft', foo);
-      expect(gesture.callbacks.swipeleft).to.equal(foo);
+      expect(gesture.callbacks.swipeleft).toBe(foo);
     });
 
     it('should add an array of listeners', () => {
       function foo() {}
       gesture.onGesture(['swipeleft', 'swiperight'], foo);
-      expect(gesture.callbacks.swipeleft).to.equal(foo);
-      expect(gesture.callbacks.swiperight).to.equal(foo);
+      expect(gesture.callbacks.swipeleft).toBe(foo);
+      expect(gesture.callbacks.swiperight).toBe(foo);
     });
   });
 
@@ -80,15 +80,15 @@ describe('gesture', () => {
       function foo() {}
       gesture.onGesture('swipeleft', foo);
       gesture.offGesture('swipeleft', foo);
-      expect(gesture.callbacks.swipeleft).to.equal(0);
+      expect(gesture.callbacks.swipeleft).toBe(0);
     });
 
     it('should remove an array of listeners', () => {
       function foo() {}
       gesture.onGesture(['swipeleft', 'swiperight'], foo);
       gesture.offGesture(['swipeleft', 'swiperight'], foo);
-      expect(gesture.callbacks.swipeleft).to.equal(0);
-      expect(gesture.callbacks.swiperight).to.equal(0);
+      expect(gesture.callbacks.swipeleft).toBe(0);
+      expect(gesture.callbacks.swiperight).toBe(0);
     });
   });
 
@@ -101,7 +101,7 @@ describe('gesture', () => {
     });
 
     it('should call swipeleft callback', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('swipeleft', spy);
 
       let evt = { type: 'touchend' };
@@ -119,11 +119,11 @@ describe('gesture', () => {
 
       emit('touchChanged', evt, touches);
 
-      expect(spy.calledWith(evt, touches)).to.be.true;
+      expect(spy).toHaveBeenCalledWith(evt, touches);
     });
 
     it('should call swiperight callback', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('swiperight', spy);
 
       let evt = { type: 'touchend' };
@@ -141,11 +141,11 @@ describe('gesture', () => {
 
       emit('touchChanged', evt, touches);
 
-      expect(spy.calledWith(evt, touches)).to.be.true;
+      expect(spy).toHaveBeenCalledWith(evt, touches);
     });
 
     it('should call swipeup callback', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('swipeup', spy);
 
       let evt = { type: 'touchend' };
@@ -163,11 +163,11 @@ describe('gesture', () => {
 
       emit('touchChanged', evt, touches);
 
-      expect(spy.calledWith(evt, touches)).to.be.true;
+      expect(spy).toHaveBeenCalledWith(evt, touches);
     });
 
     it('should call swipedown callback', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('swipedown', spy);
 
       let evt = { type: 'touchend' };
@@ -185,11 +185,11 @@ describe('gesture', () => {
 
       emit('touchChanged', evt, touches);
 
-      expect(spy.calledWith(evt, touches)).to.be.true;
+      expect(spy).toHaveBeenCalledWith(evt, touches);
     });
 
     it('should not call callback if threshold is not great enough', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('swipeleft', spy);
 
       let evt = { type: 'touchend' };
@@ -207,11 +207,11 @@ describe('gesture', () => {
 
       emit('touchChanged', evt, touches);
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not call callback if there are too many touches', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('swipeleft', spy);
 
       let evt = { type: 'touchend' };
@@ -237,11 +237,11 @@ describe('gesture', () => {
 
       emit('touchChanged', evt, touches);
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not call callback on wrong touch event', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('swipeleft', spy);
 
       let evt = { type: 'touchmove' };
@@ -259,11 +259,11 @@ describe('gesture', () => {
 
       emit('touchChanged', evt, touches);
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not call callback if touch is wrong index', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('swipeleft', spy);
 
       let evt = { type: 'touchend' };
@@ -281,7 +281,7 @@ describe('gesture', () => {
 
       emit('touchChanged', evt, touches);
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
   });
 
@@ -294,7 +294,7 @@ describe('gesture', () => {
     });
 
     it('should call pinchout callback', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('pinchout', spy);
 
       let evt = { type: 'touchmove' };
@@ -335,11 +335,11 @@ describe('gesture', () => {
       );
       emit('touchChanged', evt, touches);
 
-      expect(spy.calledWith(evt, touches)).to.be.true;
+      expect(spy).toHaveBeenCalledWith(evt, touches);
     });
 
     it('should call pinchin callback', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('pinchin', spy);
 
       let evt = { type: 'touchmove' };
@@ -380,11 +380,11 @@ describe('gesture', () => {
       );
       emit('touchChanged', evt, touches);
 
-      expect(spy.calledWith(evt, touches)).to.be.true;
+      expect(spy).toHaveBeenCalledWith(evt, touches);
     });
 
     it('should not call callback if threshold is not great enough', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('pinchout', spy);
 
       let evt = { type: 'touchmove' };
@@ -425,11 +425,11 @@ describe('gesture', () => {
       );
       emit('touchChanged', evt, touches);
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not call callback if there not enough touches', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('pinchout', spy);
 
       let evt = { type: 'touchmove' };
@@ -458,11 +458,11 @@ describe('gesture', () => {
       );
       emit('touchChanged', evt, touches);
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not call callback on wrong touch event', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('pinchout', spy);
 
       let evt = { type: 'touchend' };
@@ -503,12 +503,12 @@ describe('gesture', () => {
       );
       emit('touchChanged', evt, touches);
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not call swipe at end of a pinch if 1 finger calls touchend', () => {
-      let spy = sinon.spy();
-      gesture.onGesture('pinchin', sinon.stub());
+      let spy = jest.fn();
+      gesture.onGesture('pinchin', jest.fn());
       gesture.onGesture('swipeleft', spy);
 
       let evt = { type: 'touchend' };
@@ -556,11 +556,11 @@ describe('gesture', () => {
       );
 
       emit('touchChanged', evt, touches);
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not call callback if touch is wrong index', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       gesture.onGesture('pinchout', spy);
 
       let evt = { type: 'touchmove' };
@@ -601,7 +601,7 @@ describe('gesture', () => {
       );
       emit('touchChanged', evt, touches);
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
   });
 });

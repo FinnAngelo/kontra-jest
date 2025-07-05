@@ -15,8 +15,8 @@ let testContext = {
 describe(
   'sprite with context: ' + JSON.stringify(testContext, null, 4),
   () => {
-    it('should export class', () => {
-      expect(SpriteClass).to.be.a('function');
+    test('should export class', () => {
+      expect(typeof SpriteClass).toBe('function');
     });
 
     // --------------------------------------------------
@@ -24,7 +24,7 @@ describe(
     // --------------------------------------------------
     describe('init', () => {
       if (testContext.SPRITE_IMAGE) {
-        it('should set the width and height of the sprite to an image if passed', () => {
+        test('should set the width and height of the sprite to an image if passed', () => {
           let img = new Image();
           img.width = 10;
           img.height = 20;
@@ -33,14 +33,14 @@ describe(
             image: img
           });
 
-          expect(sprite.image).to.equal(img);
-          expect(sprite.width).to.equal(10);
-          expect(sprite.height).to.equal(20);
+          expect(sprite.image).toBe(img);
+          expect(sprite.width).toBe(10);
+          expect(sprite.height).toBe(20);
         });
       }
 
       if (testContext.SPRITE_IMAGE) {
-        it('should allow user to override with and height of image', () => {
+        test('should allow user to override with and height of image', () => {
           let img = new Image();
           img.width = 10;
           img.height = 20;
@@ -51,14 +51,14 @@ describe(
             height: 40
           });
 
-          expect(sprite.image).to.equal(img);
-          expect(sprite.width).to.equal(20);
-          expect(sprite.height).to.equal(40);
+          expect(sprite.image).toBe(img);
+          expect(sprite.width).toBe(20);
+          expect(sprite.height).toBe(40);
         });
       }
 
       if (testContext.SPRITE_ANIMATION) {
-        it('should set the width and height of the sprite to an animation if passed', () => {
+        test('should set the width and height of the sprite to an animation if passed', () => {
           // simple animation object from spriteSheet
           let animations = {
             walk: {
@@ -72,32 +72,32 @@ describe(
 
           let sprite = Sprite({ animations });
 
-          expect(sprite.animations).to.deep.equal(animations);
-          expect(sprite.currentAnimation).to.equal(animations.walk);
-          expect(sprite.width).to.equal(10);
-          expect(sprite.height).to.equal(20);
+          expect(sprite.animations).toEqual(animations);
+          expect(sprite.currentAnimation).toBe(animations.walk);
+          expect(sprite.width).toBe(10);
+          expect(sprite.height).toBe(20);
         });
       }
 
       if (testContext.SPRITE_ANIMATION) {
-        it('should clone any animations to prevent frame corruption', () => {
+        test('should clone any animations to prevent frame corruption', () => {
           let animations = {
             walk: {
               width: 10,
               height: 20,
-              clone() {
-                return this;
-              }
+              clone: jest.fn().mockReturnValue({
+                width: 10,
+                height: 20,
+                clone: function() { return this; }
+              })
             }
           };
-
-          sinon.spy(animations.walk, 'clone');
 
           Sprite({
             animations
           });
 
-          expect(animations.walk.clone.called).to.be.true;
+          expect(animations.walk.clone).toHaveBeenCalled();
         });
       }
     });
@@ -107,13 +107,13 @@ describe(
     // --------------------------------------------------
     describe('update', () => {
       if (testContext.SPRITE_ANIMATION) {
-        it('should update the animation', () => {
+        test('should update the animation', () => {
           // simple animation object from spriteSheet
           let animations = {
             walk: {
               width: 10,
               height: 20,
-              update: sinon.stub().callsFake(noop),
+              update: jest.fn(),
               clone() {
                 return this;
               }
@@ -127,15 +127,15 @@ describe(
           });
           sprite.update();
 
-          expect(sprite.currentAnimation.update.called).to.be.true;
+          expect(sprite.currentAnimation.update).toHaveBeenCalled();
         });
       } else {
-        it('should not update the animation', () => {
+        test('should not update the animation', () => {
           let animations = {
             walk: {
               width: 10,
               height: 20,
-              update: sinon.stub().callsFake(noop),
+              update: jest.fn(),
               clone() {
                 return this;
               }
@@ -150,7 +150,7 @@ describe(
           });
           sprite.update();
 
-          expect(sprite.currentAnimation.update.called).to.be.false;
+          expect(sprite.currentAnimation.update).not.toHaveBeenCalled();
         });
       }
     });
@@ -159,22 +159,22 @@ describe(
     // render
     // --------------------------------------------------
     describe('render', () => {
-      it('should draw a rect sprite', () => {
+      test('should draw a rect sprite', () => {
         let sprite = Sprite({
           x: 10,
           y: 20,
           color: true
         });
 
-        sinon.stub(sprite.context, 'fillRect').callsFake(noop);
+        const fillRectSpy = jest.spyOn(sprite.context, 'fillRect').mockImplementation(noop);
 
         sprite.render();
 
-        expect(sprite.context.fillRect.called).to.be.true;
+        expect(fillRectSpy).toHaveBeenCalled();
       });
 
       if (testContext.GAMEOBJECT_RADIUS) {
-        it('should draw a circle sprite', () => {
+        test('should draw a circle sprite', () => {
           let sprite = Sprite({
             x: 10,
             y: 20,
@@ -182,16 +182,16 @@ describe(
             color: true
           });
 
-          sinon.stub(sprite.context, 'arc').callsFake(noop);
+          const arcSpy = jest.spyOn(sprite.context, 'arc').mockImplementation(noop);
 
           sprite.render();
 
-          expect(sprite.context.arc.called).to.be.true;
+          expect(arcSpy).toHaveBeenCalled();
         });
       }
 
       if (testContext.SPRITE_IMAGE) {
-        it('should draw an image sprite', () => {
+        test('should draw an image sprite', () => {
           let img = new Image();
           img.width = 10;
           img.height = 20;
@@ -202,23 +202,23 @@ describe(
             image: img
           });
 
-          sinon.stub(sprite.context, 'drawImage').callsFake(noop);
+          const drawImageSpy = jest.spyOn(sprite.context, 'drawImage').mockImplementation(noop);
 
           sprite.render();
 
-          expect(sprite.context.drawImage.called).to.be.true;
+          expect(drawImageSpy).toHaveBeenCalled();
         });
       }
 
       if (testContext.SPRITE_ANIMATION) {
-        it('should draw an animation sprite', () => {
+        test('should draw an animation sprite', () => {
           // simple animation object from spriteSheet
           let animations = {
             walk: {
               width: 10,
               height: 20,
               update: noop,
-              render: noop,
+              render: jest.fn(),
               clone() {
                 return this;
               }
@@ -231,13 +231,9 @@ describe(
             animations
           });
 
-          sinon
-            .stub(sprite.currentAnimation, 'render')
-            .callsFake(noop);
-
           sprite.render();
 
-          expect(sprite.currentAnimation.render.called).to.be.true;
+          expect(sprite.currentAnimation.render).toHaveBeenCalled();
         });
       }
     });
@@ -247,12 +243,12 @@ describe(
     // --------------------------------------------------
     describe('playAnimation', () => {
       if (testContext.SPRITE_ANIMATION) {
-        it('should set the animation to play', () => {
+        test('should set the animation to play', () => {
           let animations = {
             walk: {
               width: 10,
               height: 20,
-              reset: sinon.spy(),
+              reset: jest.fn(),
               clone() {
                 return this;
               },
@@ -262,7 +258,7 @@ describe(
             idle: {
               width: 10,
               height: 20,
-              reset: sinon.spy(),
+              reset: jest.fn(),
               clone() {
                 return this;
               },
@@ -275,16 +271,16 @@ describe(
             animations
           });
 
-          expect(sprite.currentAnimation).to.equal(animations.walk);
+          expect(sprite.currentAnimation).toBe(animations.walk);
 
           sprite.playAnimation('idle');
 
-          expect(sprite.currentAnimation).to.equal(animations.idle);
+          expect(sprite.currentAnimation).toBe(animations.idle);
         });
       } else {
-        it('should not have animation property', () => {
+        test('should not have animation property', () => {
           let sprite = Sprite();
-          expect(sprite.animations).to.not.exist;
+          expect(sprite.animations).toBeUndefined();
         });
       }
     });

@@ -7,19 +7,19 @@ import TileEngine from '../../src/tileEngine.js';
 // --------------------------------------------------
 describe('helpers', () => {
   it('should export api', () => {
-    expect(helpers.degToRad).to.be.an('function');
-    expect(helpers.radToDeg).to.be.an('function');
-    expect(helpers.angleToTarget).to.be.an('function');
-    expect(helpers.rotatePoint).to.be.an('function');
-    expect(helpers.movePoint).to.be.an('function');
-    expect(helpers.lerp).to.be.an('function');
-    expect(helpers.inverseLerp).to.be.an('function');
-    expect(helpers.clamp).to.be.an('function');
-    expect(helpers.getStoreItem).to.be.an('function');
-    expect(helpers.setStoreItem).to.be.an('function');
-    expect(helpers.collides).to.be.an('function');
-    expect(helpers.getWorldRect).to.be.an('function');
-    expect(helpers.depthSort).to.be.an('function');
+    expect(typeof helpers.degToRad).toBe('function');
+    expect(typeof helpers.radToDeg).toBe('function');
+    expect(typeof helpers.angleToTarget).toBe('function');
+    expect(typeof helpers.rotatePoint).toBe('function');
+    expect(typeof helpers.movePoint).toBe('function');
+    expect(typeof helpers.lerp).toBe('function');
+    expect(typeof helpers.inverseLerp).toBe('function');
+    expect(typeof helpers.clamp).toBe('function');
+    expect(typeof helpers.getStoreItem).toBe('function');
+    expect(typeof helpers.setStoreItem).toBe('function');
+    expect(typeof helpers.collides).toBe('function');
+    expect(typeof helpers.getWorldRect).toBe('function');
+    expect(typeof helpers.depthSort).toBe('function');
   });
 
   // --------------------------------------------------
@@ -27,7 +27,7 @@ describe('helpers', () => {
   // --------------------------------------------------
   describe('degToRad', () => {
     it('should convert degrees to radians', () => {
-      expect(helpers.degToRad(22.35).toFixed(2)).to.equal('0.39');
+      expect(helpers.degToRad(22.35).toFixed(2)).toBe('0.39');
     });
   });
 
@@ -36,7 +36,7 @@ describe('helpers', () => {
   // --------------------------------------------------
   describe('radToDeg', () => {
     it('should convert radians to degrees', () => {
-      expect(helpers.radToDeg(0.39).toFixed(2)).to.equal('22.35');
+      expect(helpers.radToDeg(0.39).toFixed(2)).toBe('22.35');
     });
   });
 
@@ -47,10 +47,10 @@ describe('helpers', () => {
     it('should return the angle to the target', () => {
       let source = { x: 300, y: 300 };
       let target = { x: 100, y: 100 };
-      expect(helpers.angleToTarget(source, target)).to.equal(
+      expect(helpers.angleToTarget(source, target)).toBe(
         (-Math.PI * 3) / 4
       );
-      expect(helpers.angleToTarget(target, source)).to.equal(
+      expect(helpers.angleToTarget(target, source)).toBe(
         Math.PI / 4
       );
     });
@@ -64,8 +64,8 @@ describe('helpers', () => {
       let point = { x: 300, y: 300 };
       let angle = helpers.degToRad(35);
       let newPoint = helpers.rotatePoint(point, angle);
-      expect(newPoint.x.toFixed(2)).to.equal('73.67');
-      expect(newPoint.y.toFixed(2)).to.equal('417.82');
+      expect(newPoint.x.toFixed(2)).toBe('73.67');
+      expect(newPoint.y.toFixed(2)).toBe('417.82');
     });
   });
 
@@ -80,16 +80,16 @@ describe('helpers', () => {
         (-Math.PI * 3) / 4,
         141.421
       );
-      expect(newPoint.x).to.be.closeTo(200, 0.1);
-      expect(newPoint.y).to.be.closeTo(200, 0.1);
+      expect(newPoint.x).toBeCloseTo(200, 1);
+      expect(newPoint.y).toBeCloseTo(200, 1);
 
       newPoint = helpers.movePoint(point, Math.PI / 4, 141.421);
-      expect(newPoint.x).to.be.closeTo(400, 0.1);
-      expect(newPoint.y).to.be.closeTo(400, 0.1);
+      expect(newPoint.x).toBeCloseTo(400, 1);
+      expect(newPoint.y).toBeCloseTo(400, 1);
 
       newPoint = helpers.movePoint(point, Math.PI, 100);
-      expect(newPoint.x).to.be.closeTo(200, 0.1);
-      expect(newPoint.y).to.be.closeTo(300, 0.1);
+      expect(newPoint.x).toBeCloseTo(200, 1);
+      expect(newPoint.y).toBeCloseTo(300, 1);
     });
   });
 
@@ -98,19 +98,19 @@ describe('helpers', () => {
   // --------------------------------------------------
   describe('lerp', () => {
     it('should calculate the linear interpolation', () => {
-      expect(helpers.lerp(10, 20, 0.5)).to.equal(15);
+      expect(helpers.lerp(10, 20, 0.5)).toBe(15);
     });
 
     it('should handle negative numbers', () => {
-      expect(helpers.lerp(-10, 20, 0.5)).to.equal(5);
+      expect(helpers.lerp(-10, 20, 0.5)).toBe(5);
     });
 
     it('should handle percentages greater than 1', () => {
-      expect(helpers.lerp(10, 20, 2)).to.equal(30);
+      expect(helpers.lerp(10, 20, 2)).toBe(30);
     });
 
     it('should handle negative percentages', () => {
-      expect(helpers.lerp(10, 20, -1)).to.equal(0);
+      expect(helpers.lerp(10, 20, -1)).toBe(0);
     });
   });
 
@@ -119,19 +119,19 @@ describe('helpers', () => {
   // --------------------------------------------------
   describe('inverseLerp', () => {
     it('should calculate the inverse linear interpolation', () => {
-      expect(helpers.inverseLerp(10, 20, 15)).to.equal(0.5);
+      expect(helpers.inverseLerp(10, 20, 15)).toBe(0.5);
     });
 
     it('should handle negative numbers', () => {
-      expect(helpers.inverseLerp(-10, 20, 5)).to.equal(0.5);
+      expect(helpers.inverseLerp(-10, 20, 5)).toBe(0.5);
     });
 
     it('should handle percentages greater than 1', () => {
-      expect(helpers.inverseLerp(10, 20, 30)).to.equal(2);
+      expect(helpers.inverseLerp(10, 20, 30)).toBe(2);
     });
 
     it('should handle negative percentages', () => {
-      expect(helpers.inverseLerp(10, 20, 0)).to.equal(-1);
+      expect(helpers.inverseLerp(10, 20, 0)).toBe(-1);
     });
   });
 
@@ -140,15 +140,15 @@ describe('helpers', () => {
   // --------------------------------------------------
   describe('clamp', () => {
     it('should clamp the value when below min', () => {
-      expect(helpers.clamp(10, 20, 5)).to.equal(10);
+      expect(helpers.clamp(10, 20, 5)).toBe(10);
     });
 
     it('should clamp the value when above max', () => {
-      expect(helpers.clamp(10, 20, 30)).to.equal(20);
+      expect(helpers.clamp(10, 20, 30)).toBe(20);
     });
 
     it('should retain the number when between min and max', () => {
-      expect(helpers.clamp(10, 20, 15)).to.equal(15);
+      expect(helpers.clamp(10, 20, 15)).toBe(15);
     });
   });
 
@@ -169,23 +169,23 @@ describe('helpers', () => {
         helpers.setStoreItem('array', [1, 2]);
       };
 
-      expect(fn).to.not.throw(Error);
+      expect(fn).not.toThrow();
     });
 
     it('should be able to read all data types out of local storage', () => {
-      expect(helpers.getStoreItem('boolean')).to.equal(true);
-      expect(helpers.getStoreItem('number')).to.equal(1);
-      expect(helpers.getStoreItem('string')).to.equal('hello');
-      expect(helpers.getStoreItem('object')).to.deep.equal({
+      expect(helpers.getStoreItem('boolean')).toBe(true);
+      expect(helpers.getStoreItem('number')).toBe(1);
+      expect(helpers.getStoreItem('string')).toBe('hello');
+      expect(helpers.getStoreItem('object')).toEqual({
         foo: 'bar'
       });
-      expect(helpers.getStoreItem('array')).to.deep.equal([1, 2]);
+      expect(helpers.getStoreItem('array')).toEqual([1, 2]);
     });
 
     it('should remove a key from local storage using the set function when passed undefined', () => {
       helpers.setStoreItem('number', undefined);
 
-      expect(helpers.getStoreItem('number')).to.not.be.true;
+      expect(helpers.getStoreItem('number')).not.toBe(true);
     });
   });
 
@@ -208,27 +208,27 @@ describe('helpers', () => {
         height: 20
       });
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.true;
+      expect(helpers.collides(sprite1, sprite2)).toBe(true);
 
       sprite2.x = 10;
       sprite2.y = 20;
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.true;
+      expect(helpers.collides(sprite1, sprite2)).toBe(true);
 
       sprite2.x = 1;
       sprite2.y = 1;
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.true;
+      expect(helpers.collides(sprite1, sprite2)).toBe(true);
 
       sprite2.x = 20;
       sprite2.y = 40;
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.false;
+      expect(helpers.collides(sprite1, sprite2)).toBe(false);
 
       sprite2.x = 0;
       sprite2.y = 0;
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.false;
+      expect(helpers.collides(sprite1, sprite2)).toBe(false);
     });
 
     it('should take into account sprite.anchor', () => {
@@ -247,15 +247,15 @@ describe('helpers', () => {
         height: 20
       });
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.true;
+      expect(helpers.collides(sprite1, sprite2)).toBe(true);
 
       sprite1.anchor = { x: 1, y: 0 };
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.false;
+      expect(helpers.collides(sprite1, sprite2)).toBe(false);
 
       sprite2.anchor = { x: 1, y: 0 };
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.true;
+      expect(helpers.collides(sprite1, sprite2)).toBe(true);
     });
 
     it('should take into account sprite.scale', () => {
@@ -275,17 +275,17 @@ describe('helpers', () => {
         height: 20
       });
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.true;
+      expect(helpers.collides(sprite1, sprite2)).toBe(true);
 
       sprite1.scaleX = 0.5;
       sprite1.scaleY = 0.5;
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.false;
+      expect(helpers.collides(sprite1, sprite2)).toBe(false);
 
       sprite1.scaleX = 2;
       sprite1.scaleY = 2;
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.true;
+      expect(helpers.collides(sprite1, sprite2)).toBe(true);
     });
 
     it('should work for non-sprite objects', () => {
@@ -303,8 +303,8 @@ describe('helpers', () => {
         height: 20
       };
 
-      expect(helpers.collides(sprite1, obj)).to.be.true;
-      expect(helpers.collides(obj, sprite1)).to.be.true;
+      expect(helpers.collides(sprite1, obj)).toBe(true);
+      expect(helpers.collides(obj, sprite1)).toBe(true);
     });
 
     it('should correctly detect collision between two circles', () => {
@@ -320,27 +320,27 @@ describe('helpers', () => {
         radius: 10
       });
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.true;
+      expect(helpers.collides(sprite1, sprite2)).toBe(true);
 
       sprite2.x = 19;
       sprite2.y = 20;
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.true;
+      expect(helpers.collides(sprite1, sprite2)).toBe(true);
 
       sprite2.x = 1;
       sprite2.y = 1;
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.true;
+      expect(helpers.collides(sprite1, sprite2)).toBe(true);
 
       sprite2.x = 20;
       sprite2.y = 20;
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.false;
+      expect(helpers.collides(sprite1, sprite2)).toBe(false);
 
       sprite2.x = 0;
       sprite2.y = 0;
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.false;
+      expect(helpers.collides(sprite1, sprite2)).toBe(false);
     });
 
     it('should correctly detect collision between a circle and rectangle', () => {
@@ -357,27 +357,27 @@ describe('helpers', () => {
         radius: 10
       });
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.true;
+      expect(helpers.collides(sprite1, sprite2)).toBe(true);
 
       sprite2.x = 19;
       sprite2.y = 20;
 
-      expect(helpers.collides(sprite2, sprite1)).to.be.true;
+      expect(helpers.collides(sprite2, sprite1)).toBe(true);
 
       sprite2.x = 1;
       sprite2.y = 1;
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.true;
+      expect(helpers.collides(sprite1, sprite2)).toBe(true);
 
       sprite2.x = 20;
       sprite2.y = 20;
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.false;
+      expect(helpers.collides(sprite1, sprite2)).toBe(false);
 
       sprite2.x = 0;
       sprite2.y = 0;
 
-      expect(helpers.collides(sprite2, sprite1)).to.be.false;
+      expect(helpers.collides(sprite2, sprite1)).toBe(false);
     });
 
     it('returns false if either object is a circle and not scaled uniformly', () => {
@@ -394,12 +394,12 @@ describe('helpers', () => {
         radius: 10
       });
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.false;
+      expect(helpers.collides(sprite1, sprite2)).toBe(false);
 
       sprite1.scaleY = 1;
       sprite2.scaleY = 2;
 
-      expect(helpers.collides(sprite1, sprite2)).to.be.false;
+      expect(helpers.collides(sprite1, sprite2)).toBe(false);
     });
   });
 
@@ -416,10 +416,10 @@ describe('helpers', () => {
       });
       let rect = helpers.getWorldRect(sprite);
 
-      expect(rect.x).to.equal(40);
-      expect(rect.y).to.equal(40);
-      expect(rect.width).to.equal(10);
-      expect(rect.height).to.equal(10);
+      expect(rect.x).toBe(40);
+      expect(rect.y).toBe(40);
+      expect(rect.width).toBe(10);
+      expect(rect.height).toBe(10);
     });
 
     it('should take into account radius', () => {
@@ -430,10 +430,10 @@ describe('helpers', () => {
       });
       let rect = helpers.getWorldRect(sprite);
 
-      expect(rect.x).to.equal(40);
-      expect(rect.y).to.equal(40);
-      expect(rect.width).to.equal(10);
-      expect(rect.height).to.equal(10);
+      expect(rect.x).toBe(40);
+      expect(rect.y).toBe(40);
+      expect(rect.width).toBe(10);
+      expect(rect.height).toBe(10);
     });
 
     it('should take into account anchor', () => {
@@ -446,14 +446,14 @@ describe('helpers', () => {
       });
       let rect = helpers.getWorldRect(sprite);
 
-      expect(rect.x).to.equal(35);
-      expect(rect.y).to.equal(35);
+      expect(rect.x).toBe(35);
+      expect(rect.y).toBe(35);
 
       sprite.anchor = { x: 1, y: 1 };
       rect = helpers.getWorldRect(sprite);
 
-      expect(rect.x).to.equal(30);
-      expect(rect.y).to.equal(30);
+      expect(rect.x).toBe(30);
+      expect(rect.y).toBe(30);
     });
 
     it('should take into account negative scale', () => {
@@ -467,10 +467,10 @@ describe('helpers', () => {
       });
       let rect = helpers.getWorldRect(sprite);
 
-      expect(rect.x).to.equal(20);
-      expect(rect.y).to.equal(0);
-      expect(rect.width).to.equal(20);
-      expect(rect.height).to.equal(40);
+      expect(rect.x).toBe(20);
+      expect(rect.y).toBe(0);
+      expect(rect.width).toBe(20);
+      expect(rect.height).toBe(40);
     });
 
     it('should use objects world x, y, width, and height', () => {
@@ -488,10 +488,10 @@ describe('helpers', () => {
       };
       let rect = helpers.getWorldRect(sprite);
 
-      expect(rect.x).to.equal(10);
-      expect(rect.y).to.equal(20);
-      expect(rect.width).to.equal(20);
-      expect(rect.height).to.equal(30);
+      expect(rect.x).toBe(10);
+      expect(rect.y).toBe(20);
+      expect(rect.width).toBe(20);
+      expect(rect.height).toBe(30);
     });
 
     it('should work for tileEngine', () => {
@@ -504,10 +504,10 @@ describe('helpers', () => {
       });
       let rect = helpers.getWorldRect(tileEngine);
 
-      expect(rect.x).to.equal(0);
-      expect(rect.y).to.equal(0);
-      expect(rect.width).to.equal(320);
-      expect(rect.height).to.equal(384);
+      expect(rect.x).toBe(0);
+      expect(rect.y).toBe(0);
+      expect(rect.width).toBe(320);
+      expect(rect.height).toBe(384);
     });
   });
 
@@ -532,7 +532,7 @@ describe('helpers', () => {
 
       let value = helpers.depthSort(sprite1, sprite2);
 
-      expect(value).to.equal(-19);
+      expect(value).toBe(-19);
     });
 
     it('should take into account anchor', () => {
@@ -554,7 +554,7 @@ describe('helpers', () => {
 
       let value = helpers.depthSort(sprite1, sprite2);
 
-      expect(value).to.equal(5);
+      expect(value).toBe(5);
     });
 
     it('should use objects world x, y, width, and height', () => {
@@ -580,7 +580,7 @@ describe('helpers', () => {
 
       let value = helpers.depthSort(sprite1, sprite2);
 
-      expect(value).to.equal(-19);
+      expect(value).toBe(-19);
     });
 
     it('should accept different prop to compare', () => {
@@ -600,7 +600,7 @@ describe('helpers', () => {
 
       let value = helpers.depthSort(sprite1, sprite2, 'x');
 
-      expect(value).to.equal(-10);
+      expect(value).toBe(-10);
     });
   });
 });

@@ -61,53 +61,6 @@ if (optionName && options[optionName]) {
 
 Object.keys(options).forEach(async option => {
   try {
-    // get the setup code
-    let setup = fs.readFileSync(
-      path.join(__dirname, '../setup.js'),
-      'utf-8'
-    );
-    setup = setup.replaceAll('../src/', '../../src/');
-
-    // copy test suite and change path
-    let test = fs.readFileSync(
-      path.join(__dirname, `../unit/${option}.spec.js`),
-      'utf-8'
-    );
-
-    // since loading the setup code causes the core file to be loaded
-    // twice (and destroying context references) we'll need to inject
-    // the setup code into each test suite manually
-    let matches = test.match(/(import.*?from.*?[\n\r])/g);
-    let lastImport = matches[matches.length - 1];
-    test = test.replace(lastImport, `${lastImport}${setup}`);
-
-    fs.writeFileSync(
-      path.join(__dirname, `${option}.spec.js`),
-      test,
-      'utf-8'
-    );
-
-    // rollup test file
-    let bundle = await rollup.rollup({
-      input: path.join(__dirname, `${option}.spec.js`)
-    });
-    let { output } = await bundle.generate({
-      file: path.join(__dirname, `${option}.spec.js`),
-      format: 'iife'
-    });
-
-    // copy karma.conf and change path
-    let karma = fs.readFileSync(
-      path.join(__dirname, `./karma.conf.template.js`),
-      'utf-8'
-    );
-    karma = karma.replace(/__option__/g, option);
-    fs.writeFileSync(
-      path.join(__dirname, 'karma.conf.js'),
-      karma,
-      'utf-8'
-    );
-
     // generate each option and run tests
     let numPermutations = 2 ** options[option].length;
     for (let i = 0; i < numPermutations; i++) {
@@ -123,29 +76,89 @@ Object.keys(options).forEach(async option => {
         context[optionName] = !!((2 ** index) & i);
       });
 
+      // Create a temporary directory for this permutation
+      let permutationDir = path.join(__dirname, `${option}-${i}`);
+      if (!fs.existsSync(permutationDir)) {
+        fs.mkdirSync(permutationDir);
+      }
+
+      // Create a src directory for preprocessed source files
+      let srcDir = path.join(permutationDir, 'src');
+      if (!fs.existsSync(srcDir)) {
+        fs.mkdirSync(srcDir);
+      }
+
+      // Copy and preprocess all source files
+      let srcFiles = fs.readdirSync(path.join(__dirname, '../../src'));
+      srcFiles.forEach(file => {
+        if (file.endsWith('.js')) {
+          let srcContent = fs.readFileSync(
+            path.join(__dirname, `../../src/${file}`),
+            'utf-8'
+          );
+          let processedContent = pp.preprocess(srcContent, context, {
+            type: 'js'
+          });
+          fs.writeFileSync(
+            path.join(srcDir, file),
+            processedContent,
+            'utf-8'
+          );
+        }
+      });
+
+      // get the setup code
+      let setup = fs.readFileSync(
+        path.join(__dirname, '../setup.js'),
+        'utf-8'
+      );
+      // Update setup code to use the preprocessed source files
+      setup = setup.replaceAll('../src/', `./${option}-${i}/src/`);
+
+      // copy test suite and change path to use preprocessed source
+      let test = fs.readFileSync(
+        path.join(__dirname, `../unit/${option}.spec.js`),
+        'utf-8'
+      );
+      // Update test imports to use the preprocessed source files
+      test = test.replaceAll('../../src/', `./${option}-${i}/src/`);
+
+      // since loading the setup code causes the core file to be loaded
+      // twice (and destroying context references) we'll need to inject
+      // the setup code into each test suite manually
+      let matches = test.match(/(import.*?from.*?[\n\r])/g);
+      let lastImport = matches[matches.length - 1];
+      test = test.replace(lastImport, `${lastImport}${setup}`);
+
       // replace context in test suite
-      let testContents = output[0].code.replace(
+      let testContents = test.replace(
         /\/\/ test-context([\s\S])*\/\/ test-context:end/,
         `let testContext = ${JSON.stringify(context)};`
       );
 
-      // console.log('testContents:', testContents);
-
       let contents = pp.preprocess(testContents, context, {
         type: 'js'
       });
+      
+      // Write the processed test file
       fs.writeFileSync(
-        path.join(__dirname, `${option}.spec.js`),
+        path.join(__dirname, `${option}-${i}.spec.js`),
         contents,
         'utf-8'
       );
 
+      // Run Jest with the main configuration but allow it to find the file
       execSync(
-        'npx karma start ' + path.join(__dirname, 'karma.conf.js'),
+        'npx jest --testTimeout=30000 --maxWorkers=1 --collectCoverage=false --testPathPatterns="' + path.join(__dirname, `${option}-${i}.spec.js`).replace(/\\/g, '/') + '"',
         {
-          stdio: 'inherit'
+          stdio: 'inherit',
+          cwd: path.join(__dirname, '../..')
         }
       );
+
+      // Clean up the temporary directory and test file
+      fs.rmSync(permutationDir, { recursive: true, force: true });
+      fs.unlinkSync(path.join(__dirname, `${option}-${i}.spec.js`));
     }
   } catch (e) {
     // for some reason a failing test/exec does not error the program

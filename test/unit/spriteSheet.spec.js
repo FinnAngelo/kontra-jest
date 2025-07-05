@@ -8,7 +8,7 @@ import { noop } from '../../src/utils.js';
 // --------------------------------------------------
 describe('spriteSheet', () => {
   it('should export class', () => {
-    expect(SpriteSheetClass).to.be.a('function');
+    expect(typeof SpriteSheetClass).toBe('function');
   });
 
   // --------------------------------------------------
@@ -20,7 +20,7 @@ describe('spriteSheet', () => {
         SpriteSheet();
       }
 
-      expect(func).to.throw();
+      expect(func).toThrow();
     });
 
     it('should initialize properties on the spriteSheet when passed an image', () => {
@@ -32,17 +32,17 @@ describe('spriteSheet', () => {
         spacing: 20
       });
 
-      expect(spriteSheet.frame.width).to.equal(10);
-      expect(spriteSheet.frame.height).to.equal(10);
-      expect(spriteSheet.frame.margin).to.equal(10);
-      expect(spriteSheet.frame.spacing).to.equal(20);
-      expect(spriteSheet._f).to.equal(9);
+      expect(spriteSheet.frame.width).toBe(10);
+      expect(spriteSheet.frame.height).toBe(10);
+      expect(spriteSheet.frame.margin).toBe(10);
+      expect(spriteSheet.frame.spacing).toBe(20);
+      expect(spriteSheet._f).toBe(9);
     });
 
     it('should create animations if passed an animation object', () => {
-      sinon
-        .stub(SpriteSheetClass.prototype, 'createAnimations')
-        .callsFake(noop);
+      jest
+        .spyOn(SpriteSheetClass.prototype, 'createAnimations')
+        .mockImplementation(noop);
 
       SpriteSheet({
         image: new Image(100, 200),
@@ -51,8 +51,7 @@ describe('spriteSheet', () => {
         animations: {}
       });
 
-      expect(SpriteSheetClass.prototype.createAnimations.called).to.be
-        .true;
+      expect(SpriteSheetClass.prototype.createAnimations).toHaveBeenCalled();
     });
 
     it('should default margin and spacing to 0', () => {
@@ -62,9 +61,9 @@ describe('spriteSheet', () => {
         frameHeight: 10
       });
 
-      expect(spriteSheet.frame.margin).to.equal(0);
-      expect(spriteSheet.frame.spacing).to.equal(0);
-      expect(spriteSheet._f).to.equal(10);
+      expect(spriteSheet.frame.margin).toBe(0);
+      expect(spriteSheet.frame.spacing).toBe(0);
+      expect(spriteSheet._f).toBe(10);
     });
   });
 
@@ -89,7 +88,7 @@ describe('spriteSheet', () => {
         });
       }
 
-      expect(func).to.throw();
+      expect(func).toThrow();
     });
 
     it('should accept a single frame', () => {
@@ -99,8 +98,8 @@ describe('spriteSheet', () => {
         }
       });
 
-      expect(spriteSheet.animations.walk).to.exist;
-      expect(spriteSheet.animations.walk.frames).to.deep.equal([1]);
+      expect(spriteSheet.animations.walk).toBeDefined();
+      expect(spriteSheet.animations.walk.frames).toEqual([1]);
     });
 
     it('should accept a string of ascending consecutive frames', () => {
@@ -110,8 +109,8 @@ describe('spriteSheet', () => {
         }
       });
 
-      expect(spriteSheet.animations.walk).to.exist;
-      expect(spriteSheet.animations.walk.frames).to.deep.equal([
+      expect(spriteSheet.animations.walk).toBeDefined();
+      expect(spriteSheet.animations.walk.frames).toEqual([
         1, 2, 3, 4, 5
       ]);
     });
@@ -123,8 +122,8 @@ describe('spriteSheet', () => {
         }
       });
 
-      expect(spriteSheet.animations.walk).to.exist;
-      expect(spriteSheet.animations.walk.frames).to.deep.equal([
+      expect(spriteSheet.animations.walk).toBeDefined();
+      expect(spriteSheet.animations.walk.frames).toEqual([
         5, 4, 3, 2, 1
       ]);
     });
@@ -136,8 +135,8 @@ describe('spriteSheet', () => {
         }
       });
 
-      expect(spriteSheet.animations.walk).to.exist;
-      expect(spriteSheet.animations.walk.frames).to.deep.equal([
+      expect(spriteSheet.animations.walk).toBeDefined();
+      expect(spriteSheet.animations.walk.frames).toEqual([
         1, 2, 3
       ]);
     });
@@ -149,8 +148,8 @@ describe('spriteSheet', () => {
         }
       });
 
-      expect(spriteSheet.animations.walk).to.exist;
-      expect(spriteSheet.animations.walk.frames).to.deep.equal([
+      expect(spriteSheet.animations.walk).toBeDefined();
+      expect(spriteSheet.animations.walk.frames).toEqual([
         1, 3, 5
       ]);
     });
@@ -162,8 +161,8 @@ describe('spriteSheet', () => {
         }
       });
 
-      expect(spriteSheet.animations.walk).to.exist;
-      expect(spriteSheet.animations.walk.frames).to.deep.equal([
+      expect(spriteSheet.animations.walk).toBeDefined();
+      expect(spriteSheet.animations.walk.frames).toEqual([
         1, 2, 3, 4, 5, 4, 3, 2, 1
       ]);
     });

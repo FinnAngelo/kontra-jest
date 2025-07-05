@@ -19,9 +19,23 @@ import {
 // --------------------------------------------------
 describe('input', () => {
   beforeEach(() => {
-    sinon
-      .stub(navigator, 'getGamepads')
-      .returns(getGamepadsStub);
+    // Mock GamepadEvent if it doesn't exist
+    if (typeof GamepadEvent === 'undefined') {
+      global.GamepadEvent = class GamepadEvent extends Event {
+        constructor(type, eventInitDict) {
+          super(type, eventInitDict);
+          this.gamepad = eventInitDict?.gamepad || null;
+        }
+      };
+    }
+    
+    // Ensure navigator.getGamepads exists before spying on it
+    if (!navigator.getGamepads) {
+      navigator.getGamepads = jest.fn();
+    }
+    jest
+      .spyOn(navigator, 'getGamepads')
+      .mockReturnValue(getGamepadsStub);
     input.initInput();
   });
 
@@ -30,9 +44,9 @@ describe('input', () => {
   });
 
   it('should export api', () => {
-    expect(input.initInput).to.be.an('function');
-    expect(input.onInput).to.be.an('function');
-    expect(input.offInput).to.be.an('function');
+    expect(input.initInput).toEqual(expect.any(Function));
+    expect(input.onInput).toEqual(expect.any(Function));
+    expect(input.offInput).toEqual(expect.any(Function));
   });
 
   it('should have unique input names for each input type', () => {
@@ -51,7 +65,7 @@ describe('input', () => {
     let isUnique = inputNames.every((name, index) => {
       return inputNames.indexOf(name) === index;
     });
-    expect(isUnique).to.be.true;
+    expect(isUnique).toBe(true);
   });
 
   // --------------------------------------------------
@@ -59,19 +73,19 @@ describe('input', () => {
   // --------------------------------------------------
   describe('initInput', () => {
     it('should init inputs', () => {
-      let windowSpy = sinon.spy(window, 'addEventListener');
-      let canvasSpy = sinon.spy(getCanvas(), 'addEventListener');
+      let windowSpy = jest.spyOn(window, 'addEventListener');
+      let canvasSpy = jest.spyOn(getCanvas(), 'addEventListener');
 
       input.initInput();
 
       // keyboard
-      expect(windowSpy.calledWith('keydown')).to.be.true;
+      expect(windowSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
       // gamepad
-      expect(windowSpy.calledWith('gamepadconnected')).to.be.true;
+      expect(windowSpy).toHaveBeenCalledWith('gamepadconnected', expect.any(Function));
       // gesture
-      expect(eventCallbacks.touchChanged).to.exist;
+      expect(eventCallbacks.touchChanged).toBeDefined();
       // pointer
-      expect(canvasSpy.calledWith('mousedown')).to.be.true;
+      expect(canvasSpy).toHaveBeenCalledWith('mousedown', expect.any(Function));
     });
 
     it('should pass pointer options', () => {
@@ -80,13 +94,13 @@ describe('input', () => {
         pointer: { radius: 10 }
       });
 
-      expect(getPointer().radius).to.equal(10);
+      expect(getPointer().radius).toBe(10);
     });
 
     it('should return init objects', () => {
       let object = input.initInput();
 
-      expect(object.pointer).to.exist;
+      expect(object.pointer).toBeDefined();
     });
   });
 
@@ -95,27 +109,27 @@ describe('input', () => {
   // --------------------------------------------------
   describe('onInput', () => {
     it('should call the callback for keyboard event', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput('arrowleft', spy);
 
       simulateEvent('keydown', { code: 'ArrowLeft' });
 
-      expect(spy.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should call the callback for gamepad event', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput('south', spy);
 
       createGamepad();
       getGamepadsStub[0].buttons[0].pressed = true;
       updateGamepad();
 
-      expect(spy.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should call the callback for gesture event', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput('swipeleft', spy);
 
       let evt = { type: 'touchend' };
@@ -133,11 +147,11 @@ describe('input', () => {
 
       emit('touchChanged', evt, touches);
 
-      expect(spy.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should call the callback for pointer event', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput('down', spy);
 
       simulateEvent(
@@ -150,31 +164,31 @@ describe('input', () => {
         getCanvas()
       );
 
-      expect(spy.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should accept an array of inputs', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput(['dpadleft', 'arrowleft', 'swipeleft'], spy);
 
       simulateEvent('keydown', { code: 'ArrowLeft' });
 
-      expect(spy.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should pass keyboard options', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput('arrowleft', spy, {
         key: { handler: 'keyup' }
       });
 
       simulateEvent('keyup', { code: 'ArrowLeft' });
 
-      expect(spy.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should pass gamepad options', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput('south', spy, {
         gamepad: { handler: 'gamepadup' }
       });
@@ -183,12 +197,12 @@ describe('input', () => {
       getGamepadsStub[0].buttons[0].pressed = true;
       updateGamepad();
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
 
       getGamepadsStub[0].buttons[0].pressed = false;
       updateGamepad();
 
-      expect(spy.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should throw error if input name is invalid', () => {
@@ -196,7 +210,7 @@ describe('input', () => {
         input.onInput('foo', () => {});
       }
 
-      expect(fn).to.throw();
+      expect(fn).toThrow();
     });
   });
 
@@ -205,17 +219,17 @@ describe('input', () => {
   // --------------------------------------------------
   describe('offInput', () => {
     it('should not call the callback for keyboard event', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput('arrowleft', spy);
       input.offInput('arrowleft');
 
       simulateEvent('keydown', { code: 'ArrowLeft' });
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not call the callback for gamepad event', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput('south', spy);
       input.offInput('south');
 
@@ -223,11 +237,11 @@ describe('input', () => {
       getGamepadsStub[0].buttons[0].pressed = true;
       updateGamepad();
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not call the callback for gesture event', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput('swipeleft', spy);
       input.offInput('swipeleft');
 
@@ -246,11 +260,11 @@ describe('input', () => {
 
       emit('touchChanged', evt, touches);
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not call the callback for pointer event', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput('down', spy);
       input.offInput('down');
 
@@ -264,21 +278,21 @@ describe('input', () => {
         getCanvas()
       );
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should accept an array of inputs', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput(['dpadleft', 'arrowleft', 'swipeleft'], spy);
       input.offInput(['dpadleft', 'arrowleft']);
 
       simulateEvent('keydown', { code: 'ArrowLeft' });
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should pass keyboard options', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput('arrowleft', spy, {
         key: { handler: 'keyup' }
       });
@@ -288,11 +302,11 @@ describe('input', () => {
 
       simulateEvent('keyup', { code: 'ArrowLeft' });
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should pass gamepad options', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
       input.onInput('south', spy, {
         gamepad: { handler: 'gamepadup' }
       });
@@ -306,7 +320,7 @@ describe('input', () => {
       getGamepadsStub[0].buttons[0].pressed = false;
       updateGamepad();
 
-      expect(spy.called).to.be.false;
+      expect(spy).not.toHaveBeenCalled();
     });
   });
 });

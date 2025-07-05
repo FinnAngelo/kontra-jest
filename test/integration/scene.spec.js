@@ -8,7 +8,7 @@ import { noop } from '../../src/utils.js';
 import { emit } from '../../src/events.js';
 
 describe('scene integration', () => {
-  before(() => {
+  beforeAll(() => {
     if (!getCanvas()) {
       let canvas = document.createElement('canvas');
       canvas.width = canvas.height = 600;
@@ -17,7 +17,7 @@ describe('scene integration', () => {
   });
 
   it('should render a tileEngine', () => {
-    let spy = sinon.spy();
+    let spy = jest.fn();
     let tileEngine = TileEngine({
       width: 10,
       height: 12,
@@ -34,14 +34,15 @@ describe('scene integration', () => {
 
     scene.render();
 
-    expect(spy.called).to.be.true;
+    expect(spy).toHaveBeenCalled();
   });
 
   it('should work with helpers.depthSort', () => {
     let objects = [];
     let spies = [];
+    let callOrder = [];
     for (let i = 5; i > 0; i--) {
-      let spy = sinon.spy();
+      let spy = jest.fn(() => callOrder.push(i));
       spies.push(spy);
       objects.push(
         Sprite({
@@ -62,10 +63,8 @@ describe('scene integration', () => {
     });
     scene.render();
 
-    expect(spies[4].calledBefore(spies[3])).to.be.true;
-    expect(spies[3].calledBefore(spies[2])).to.be.true;
-    expect(spies[2].calledBefore(spies[1])).to.be.true;
-    expect(spies[1].calledBefore(spies[0])).to.be.true;
+    // Check that objects were called in correct order (lowest y first)
+    expect(callOrder).toEqual([1, 2, 3, 4, 5]);
   });
 
   it('should correctly track objects with pointer when camera is moved', () => {
@@ -87,12 +86,12 @@ describe('scene integration', () => {
 
     pntr.x = 105;
     pntr.y = 55;
-    expect(pointer.pointerOver(object)).to.equal(true);
+    expect(pointer.pointerOver(object)).toBe(true);
 
     scene.camera.x += 100;
-    expect(pointer.pointerOver(object)).to.equal(false);
+    expect(pointer.pointerOver(object)).toBe(false);
 
     pntr.x = 5;
-    expect(pointer.pointerOver(object)).to.equal(true);
+    expect(pointer.pointerOver(object)).toBe(true);
   });
 });

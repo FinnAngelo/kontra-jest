@@ -26,7 +26,7 @@ describe('pool', () => {
   };
 
   it('should export class', () => {
-    expect(PoolClass).to.be.a('function');
+    expect(typeof PoolClass).toBe('function');
   });
 
   // --------------------------------------------------
@@ -38,7 +38,7 @@ describe('pool', () => {
         Pool();
       }
 
-      expect(func).to.throw();
+      expect(func).toThrow();
     });
 
     it('should log an error if the create function did not return an object', () => {
@@ -46,7 +46,7 @@ describe('pool', () => {
         Pool({ create: noop });
       }
 
-      expect(func).to.throw();
+      expect(func).toThrow();
     });
 
     it('should log an error if the create function returned an object with missing functions', () => {
@@ -60,7 +60,7 @@ describe('pool', () => {
         });
       }
 
-      expect(func).to.throw();
+      expect(func).toThrow();
     });
 
     it('should default maxSize to 1024', () => {
@@ -68,7 +68,7 @@ describe('pool', () => {
         create: sprite
       });
 
-      expect(pool.maxSize).to.equal(1024);
+      expect(pool.maxSize).toBe(1024);
     });
 
     it('should allow setting maxSize', () => {
@@ -77,7 +77,7 @@ describe('pool', () => {
         maxSize: 10
       });
 
-      expect(pool.maxSize).to.equal(10);
+      expect(pool.maxSize).toBe(10);
     });
   });
 
@@ -90,11 +90,11 @@ describe('pool', () => {
         create: sprite
       });
 
-      let spy = sinon.spy(pool.objects[0], 'init');
+      let spy = jest.spyOn(pool.objects[0], 'init');
 
       pool.get();
 
-      expect(spy.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should pass the properties to the objects init function', () => {
@@ -106,11 +106,11 @@ describe('pool', () => {
         x: 1
       };
 
-      let spy = sinon.spy(pool.objects[0], 'init');
+      let spy = jest.spyOn(pool.objects[0], 'init');
 
       pool.get(args);
 
-      expect(spy.calledWith(args)).to.be.true;
+      expect(spy).toHaveBeenCalledWith(args);
     });
 
     it('should increase the size of the pool when there are no more objects', () => {
@@ -118,13 +118,13 @@ describe('pool', () => {
         create: sprite
       });
 
-      expect(pool.size).to.equal(0);
+      expect(pool.size).toBe(0);
 
       pool.get({ alive: true });
       pool.get({ alive: true });
       pool.get({ alive: true });
 
-      expect(pool.size).to.not.equal(0);
+      expect(pool.size).not.toBe(0);
     });
 
     it('should not increase the size of the pool past the max size', () => {
@@ -137,7 +137,7 @@ describe('pool', () => {
         pool.get({ alive: true });
       }
 
-      expect(pool.size).to.equal(5);
+      expect(pool.size).toBe(5);
     });
 
     it('should not continue making objects if not needed', () => {
@@ -152,8 +152,8 @@ describe('pool', () => {
         });
       }
 
-      expect(pool.size).to.not.equal(pool.maxSize);
-      expect(pool.objects.length).to.be.equal(256);
+      expect(pool.size).not.toBe(pool.maxSize);
+      expect(pool.objects.length).toBe(256);
     });
   });
 
@@ -170,16 +170,16 @@ describe('pool', () => {
 
       pool.get({ alive: true, id: id++ });
 
-      expect(pool.getAliveObjects().length).to.equal(1);
-      expect(pool.getAliveObjects()[0].id).to.equal(0);
+      expect(pool.getAliveObjects().length).toBe(1);
+      expect(pool.getAliveObjects()[0].id).toBe(0);
 
       pool.get({ alive: true, id: id++ });
       pool.get({ alive: true, id: id++ });
 
-      expect(pool.getAliveObjects().length).to.equal(3);
-      expect(pool.getAliveObjects()[0].id).to.equal(0);
-      expect(pool.getAliveObjects()[1].id).to.equal(1);
-      expect(pool.getAliveObjects()[2].id).to.equal(2);
+      expect(pool.getAliveObjects().length).toBe(3);
+      expect(pool.getAliveObjects()[0].id).toBe(0);
+      expect(pool.getAliveObjects()[1].id).toBe(1);
+      expect(pool.getAliveObjects()[2].id).toBe(2);
     });
 
     it('should return only alive objects after an update', () => {
@@ -196,9 +196,9 @@ describe('pool', () => {
       pool.getAliveObjects()[1].alive = false;
       pool.update();
 
-      expect(pool.getAliveObjects().length).to.equal(2);
-      expect(pool.getAliveObjects()[0].id).to.equal(0);
-      expect(pool.getAliveObjects()[1].id).to.equal(2);
+      expect(pool.getAliveObjects().length).toBe(2);
+      expect(pool.getAliveObjects()[0].id).toBe(0);
+      expect(pool.getAliveObjects()[1].id).toBe(2);
     });
   });
 
@@ -233,7 +233,7 @@ describe('pool', () => {
 
       pool.update();
 
-      expect(count).to.equal(3);
+      expect(count).toBe(3);
     });
 
     it('should move a dead object to the end of the pool', () => {
@@ -255,22 +255,22 @@ describe('pool', () => {
         pool.objects[2]
       ];
 
-      expect(pool.objects[0].isAlive()).to.be.true;
+      expect(pool.objects[0].isAlive()).toBe(true);
 
       pool.update();
 
-      expect(pool.getAliveObjects().length).to.equal(4);
-      expect(pool.objects[2].isAlive()).to.be.true;
-      expect(pool.objects[4].isAlive()).to.be.false;
+      expect(pool.getAliveObjects().length).toBe(4);
+      expect(pool.objects[2].isAlive()).toBe(true);
+      expect(pool.objects[4].isAlive()).toBe(false);
       expect(
         pool.getAliveObjects().indexOf(pool.objects[4])
-      ).to.equal(-1);
+      ).toBe(-1);
 
-      expect(pool.objects[0]).to.equal(expected[0]);
-      expect(pool.objects[1]).to.equal(expected[1]);
-      expect(pool.objects[2]).to.equal(expected[2]);
-      expect(pool.objects[3]).to.equal(expected[3]);
-      expect(pool.objects[4]).to.equal(expected[4]);
+      expect(pool.objects[0]).toBe(expected[0]);
+      expect(pool.objects[1]).toBe(expected[1]);
+      expect(pool.objects[2]).toBe(expected[2]);
+      expect(pool.objects[3]).toBe(expected[3]);
+      expect(pool.objects[4]).toBe(expected[4]);
     });
   });
 
@@ -305,7 +305,7 @@ describe('pool', () => {
 
       pool.render();
 
-      expect(count).to.equal(3);
+      expect(count).toBe(3);
     });
   });
 
@@ -325,8 +325,8 @@ describe('pool', () => {
 
       pool.clear();
 
-      expect(pool.objects.length).to.equal(1);
-      expect(pool.size).to.equal(0);
+      expect(pool.objects.length).toBe(1);
+      expect(pool.size).toBe(0);
     });
   });
 });

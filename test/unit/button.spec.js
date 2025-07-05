@@ -25,7 +25,7 @@ describe('button', () => {
   });
 
   it('should export class', () => {
-    expect(ButtonClass).to.be.a('function');
+    expect(typeof ButtonClass).toBe('function');
   });
 
   // --------------------------------------------------
@@ -36,9 +36,9 @@ describe('button', () => {
       button.destroy();
       button = Button();
 
-      expect(button.padX).to.equal(0);
-      expect(button.padY).to.equal(0);
-      expect(button.textNode instanceof TextClass).to.be.true;
+      expect(button.padX).toBe(0);
+      expect(button.padY).toBe(0);
+      expect(button.textNode instanceof TextClass).toBe(true);
     });
 
     it('should setup text properties', () => {
@@ -52,12 +52,12 @@ describe('button', () => {
         }
       });
 
-      expect(button.textNode).to.exist;
-      expect(button.textNode.width).to.equal(100);
-      expect(button.textNode.height).to.equal(32);
-      expect(button.textNode.font).to.equal('32px Arial');
-      expect(button.textNode.text).to.equal('Hello');
-      expect(button.textNode.color).to.equal('black');
+      expect(button.textNode).toBeDefined();
+      expect(button.textNode.width).toBe(100);
+      expect(button.textNode.height).toBe(32);
+      expect(button.textNode.font).toBe('32px Arial');
+      expect(button.textNode.text).toBe('Hello');
+      expect(button.textNode.color).toBe('black');
     });
 
     it('should start disabled if specified', () => {
@@ -66,7 +66,7 @@ describe('button', () => {
         disabled: true
       });
 
-      expect(button.disabled).to.be.true;
+      expect(button.disabled).toBe(true);
     });
 
     it('should default width to the text size', () => {
@@ -78,7 +78,7 @@ describe('button', () => {
         }
       });
 
-      expect(button.width).to.equal(100);
+      expect(button.width).toBe(100);
     });
 
     it('should set the button to the width if it is greater', () => {
@@ -91,7 +91,7 @@ describe('button', () => {
         }
       });
 
-      expect(button.width).to.equal(150);
+      expect(button.width).toBe(150);
     });
 
     it('should set the button to the text width if it is greater', () => {
@@ -104,7 +104,7 @@ describe('button', () => {
         }
       });
 
-      expect(button.width).to.equal(100);
+      expect(button.width).toBe(100);
     });
 
     it('should pass the context to the textNode', () => {
@@ -117,23 +117,23 @@ describe('button', () => {
         context
       });
 
-      expect(button.textNode.context).to.equal(context);
+      expect(button.textNode.context).toBe(context);
     });
 
     it('should create a DOM node and add it to the page', () => {
-      expect(button.node).to.exist;
-      expect(button.node instanceof HTMLButtonElement).to.be.true;
-      expect(button.node.textContent).to.equal('Hello');
-      expect(document.body.contains(button.node)).to.be.true;
+      expect(button.node).toBeDefined();
+      expect(button.node instanceof HTMLButtonElement).toBe(true);
+      expect(button.node.textContent).toBe('Hello');
+      expect(document.body.contains(button.node)).toBe(true);
     });
 
     it('should not allow setting the node', () => {
-      expect(() => (button.node = 1)).to.not.throw;
-      expect(button.node instanceof HTMLButtonElement).to.be.true;
+      expect(() => (button.node = 1)).toThrow();
+      expect(button.node instanceof HTMLButtonElement).toBe(true);
     });
 
     it('should add the button as an immediate sibling to the canvas', () => {
-      expect(button.context.canvas.nextSibling).to.equal(button._dn);
+      expect(button.context.canvas.nextSibling).toBe(button._dn);
     });
 
     it('should add the node to a container', () => {
@@ -148,7 +148,7 @@ describe('button', () => {
         container
       });
 
-      expect(container.contains(button.node)).to.be.true;
+      expect(container.contains(button.node)).toBe(true);
     });
 
     it('should hide the DOM node', () => {
@@ -162,23 +162,23 @@ describe('button', () => {
         .map(style => style.split(':')[0].trim())
         .filter(style => !!style)
         .forEach((prop, index) => {
-          expect(styles[index]).to.equal(prop);
+          expect(styles[index]).toBe(prop);
         });
     });
 
     it('should setup focus event listeners on the DOM node', () => {
-      sinon.spy(button, 'focus');
+      jest.spyOn(button, 'focus');
       button._dn.focus();
 
-      expect(button.focus.called).to.be.true;
+      expect(button.focus).toHaveBeenCalled();
     });
 
     it('should setup blur event listeners on the DOM node', () => {
-      sinon.spy(button, 'blur');
+      jest.spyOn(button, 'blur');
       button._dn.focus();
       button._dn.blur();
 
-      expect(button.blur.called).to.be.true;
+      expect(button.blur).toHaveBeenCalled();
     });
   });
 
@@ -191,24 +191,24 @@ describe('button', () => {
     // --------------------------------------------------
     describe('onDown', () => {
       it('should call onDown if Enter is pressed', () => {
-        sinon.spy(button, 'onDown');
+        button.onDown = jest.fn();
         simulateEvent('keydown', { code: 'Enter' }, button._dn);
 
-        expect(button.onDown.called).to.be.true;
+        expect(button.onDown).toHaveBeenCalled();
       });
 
       it('should call onDown if Space is pressed', () => {
-        sinon.spy(button, 'onDown');
+        button.onDown = jest.fn();
         simulateEvent('keydown', { code: 'Space' }, button._dn);
 
-        expect(button.onDown.called).to.be.true;
+        expect(button.onDown).toHaveBeenCalled();
       });
 
       it('should not call onDown if any other key is pressed', () => {
-        sinon.spy(button, 'onDown');
+        button.onDown = jest.fn();
         simulateEvent('keydown', { code: 'KeyA' }, button._dn);
 
-        expect(button.onDown.called).to.be.false;
+        expect(button.onDown).not.toHaveBeenCalled();
       });
     });
 
@@ -217,24 +217,24 @@ describe('button', () => {
     // --------------------------------------------------
     describe('onUp', () => {
       it('should call onUp if Enter is pressed', () => {
-        sinon.spy(button, 'onUp');
+        button.onUp = jest.fn();
         simulateEvent('keyup', { code: 'Enter' }, button._dn);
 
-        expect(button.onUp.called).to.be.true;
+        expect(button.onUp).toHaveBeenCalled();
       });
 
       it('should call onUp if Space is pressed', () => {
-        sinon.spy(button, 'onUp');
+        button.onUp = jest.fn();
         simulateEvent('keyup', { code: 'Space' }, button._dn);
 
-        expect(button.onUp.called).to.be.true;
+        expect(button.onUp).toHaveBeenCalled();
       });
 
       it('should not call onUp if any other key is pressed', () => {
-        sinon.spy(button, 'onUp');
+        button.onUp = jest.fn();
         simulateEvent('keyup', { code: 'KeyA' }, button._dn);
 
-        expect(button.onUp.called).to.be.false;
+        expect(button.onUp).not.toHaveBeenCalled();
       });
     });
   });
@@ -244,13 +244,13 @@ describe('button', () => {
   // --------------------------------------------------
   describe('text', () => {
     it('should return the text of the textNode', () => {
-      expect(button.text).to.equal('Hello');
+      expect(button.text).toBe('Hello');
     });
 
     it('should set the text of the textNode', () => {
       button.text = 'my text';
 
-      expect(button.textNode.text).to.equal('my text');
+      expect(button.textNode.text).toBe('my text');
     });
   });
 
@@ -261,7 +261,7 @@ describe('button', () => {
     it('should remove the DOM node', () => {
       button.destroy();
 
-      expect(document.body.contains(button._dn)).to.be.false;
+      expect(document.body.contains(button._dn)).toBe(false);
     });
   });
 
@@ -270,35 +270,35 @@ describe('button', () => {
   // --------------------------------------------------
   describe('prerender', () => {
     it('should be called if a property was changed since the last render', () => {
-      sinon.stub(button, '_p');
+      button._p = jest.fn();
 
       button.render();
 
-      expect(button._p.called).to.be.false;
+      expect(button._p).not.toHaveBeenCalled();
 
       button.text = 'Foo';
 
       button.render();
 
-      expect(button._p.called).to.be.true;
+      expect(button._p).toHaveBeenCalled();
     });
 
     it('should update the DOM node text if the button text has changed', () => {
       button.text = 'World!';
       button.render();
 
-      expect(button.text).to.equal('World!');
+      expect(button.text).toBe('World!');
     });
 
     it('should update the width and height of the button if the text changes', () => {
-      expect(button.width).to.be.below(50);
+      const initialWidth = button.width;
 
       button.textNode.font = '32px Arial';
       button.text = 'Hello World!';
       button.render();
 
-      expect(button.width).to.be.above(50);
-      expect(button.height).to.equal(32);
+      expect(button.width).toBeGreaterThan(initialWidth);
+      expect(button.height).toBe(32);
     });
 
     it('should not update the wdith and height of the button if the button width is great', () => {
@@ -309,8 +309,8 @@ describe('button', () => {
       button.text = 'Hello World!';
       button.render();
 
-      expect(button.width).to.be.equal(300);
-      expect(button.height).to.equal(300);
+      expect(button.width).toBe(300);
+      expect(button.height).toBe(300);
     });
   });
 
@@ -322,43 +322,39 @@ describe('button', () => {
       button.focused = false;
       button.focus();
 
-      expect(button.focused).to.be.true;
+      expect(button.focused).toBe(true);
     });
 
     it('should call onFocus', () => {
-      sinon.spy(button, 'onFocus');
+      button.onFocus = jest.fn();
       button.focus();
 
-      expect(button.onFocus.called).to.be.true;
+      expect(button.onFocus).toHaveBeenCalled();
     });
 
     it('should focus the DOM node', () => {
-      sinon.spy(button._dn, 'focus');
+      jest.spyOn(button._dn, 'focus');
       button.focus();
 
-      expect(
-        button._dn.focus.calledWith(
-          sinon.match({ preventScroll: true })
-        )
-      ).to.be.true;
+      expect(button._dn.focus).toHaveBeenCalledWith({ preventScroll: true });
     });
 
     it('should not focus the DOM node if it is already focused', () => {
       button._dn.focus();
-      sinon.spy(button._dn, 'focus');
+      const focusSpy = jest.spyOn(button._dn, 'focus');
       button.focus();
 
-      expect(button._dn.focus.called).to.be.false;
+      expect(focusSpy).not.toHaveBeenCalled();
     });
 
     it('should not focus if button is disabled', () => {
       button.focused = false;
       button.disabled = true;
-      sinon.spy(button, 'onFocus');
+      button.onFocus = jest.fn();
       button.focus();
 
-      expect(button.focused).to.be.false;
-      expect(button.onFocus.called).to.be.false;
+      expect(button.focused).toBe(false);
+      expect(button.onFocus).not.toHaveBeenCalled();
     });
   });
 
@@ -374,30 +370,30 @@ describe('button', () => {
       button.focused = true;
       button.blur();
 
-      expect(button.focused).to.be.false;
+      expect(button.focused).toBe(false);
     });
 
     it('should call onBlur', () => {
-      sinon.spy(button, 'onBlur');
+      button.onBlur = jest.fn();
       button.blur();
 
-      expect(button.onBlur.called).to.be.true;
+      expect(button.onBlur).toHaveBeenCalled();
     });
 
     it('should blur the DOM node', () => {
       button._dn.focus();
-      sinon.spy(button._dn, 'blur');
+      const blurSpy = jest.spyOn(button._dn, 'blur');
       button.blur();
 
-      expect(button._dn.blur.called).to.be.true;
+      expect(blurSpy).toHaveBeenCalled();
     });
 
     it('should not blur the DOM node if it is already blurred', () => {
       button._dn.blur();
-      sinon.spy(button._dn, 'blur');
+      const blurSpy = jest.spyOn(button._dn, 'blur');
       button.blur();
 
-      expect(button._dn.blur.called).to.be.false;
+      expect(blurSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -409,20 +405,20 @@ describe('button', () => {
       button.disabled = true;
       button.enable();
 
-      expect(button.disabled).to.be.false;
+      expect(button.disabled).toBe(false);
     });
 
     it('should unset the DOM nodes disable property', () => {
       button.enable();
 
-      expect(button._dn.disabled).to.be.false;
+      expect(button._dn.disabled).toBe(false);
     });
 
     it('should call onEnable', () => {
-      sinon.spy(button, 'onEnable');
+      button.onEnable = jest.fn();
       button.enable();
 
-      expect(button.onEnable.called).to.be.true;
+      expect(button.onEnable).toHaveBeenCalled();
     });
   });
 
@@ -434,20 +430,20 @@ describe('button', () => {
       button.disabled = false;
       button.disable();
 
-      expect(button.disabled).to.be.true;
+      expect(button.disabled).toBe(true);
     });
 
     it('should set the DOM nodes disable property', () => {
       button.disable();
 
-      expect(button._dn.disabled).to.be.true;
+      expect(button._dn.disabled).toBe(true);
     });
 
     it('should call onDisable', () => {
-      sinon.spy(button, 'onDisable');
+      button.onDisable = jest.fn();
       button.disable();
 
-      expect(button.onDisable.called).to.be.true;
+      expect(button.onDisable).toHaveBeenCalled();
     });
   });
 
@@ -459,7 +455,7 @@ describe('button', () => {
       button.hovered = false;
       button.onOver();
 
-      expect(button.hovered).to.be.true;
+      expect(button.hovered).toBe(true);
     });
 
     it('should not hover if button is disabled', () => {
@@ -467,7 +463,7 @@ describe('button', () => {
       button.disabled = true;
       button.onOver();
 
-      expect(button.hovered).to.be.false;
+      expect(button.hovered).toBe(false);
     });
   });
 
@@ -479,7 +475,7 @@ describe('button', () => {
       button.hovered = true;
       button.onOut();
 
-      expect(button.hovered).to.be.false;
+      expect(button.hovered).toBe(false);
     });
   });
 
@@ -491,11 +487,11 @@ describe('button', () => {
       button.pressed = false;
       button.onDown();
 
-      expect(button.pressed).to.be.true;
+      expect(button.pressed).toBe(true);
     });
 
     it('should call onDown if passed', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
 
       button = new Button({
         text: {
@@ -505,7 +501,7 @@ describe('button', () => {
       });
       button.onDown();
 
-      expect(spy.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should not press if button is disabled', () => {
@@ -513,7 +509,7 @@ describe('button', () => {
       button.disabled = true;
       button.onDown();
 
-      expect(button.pressed).to.be.false;
+      expect(button.pressed).toBe(false);
     });
   });
 
@@ -525,11 +521,11 @@ describe('button', () => {
       button.pressed = true;
       button.onUp();
 
-      expect(button.pressed).to.be.false;
+      expect(button.pressed).toBe(false);
     });
 
     it('should call onUp if passed', () => {
-      let spy = sinon.spy();
+      let spy = jest.fn();
 
       button = new Button({
         text: {
@@ -539,7 +535,7 @@ describe('button', () => {
       });
       button.onUp();
 
-      expect(spy.called).to.be.true;
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should not press if button is disabled', () => {
@@ -547,7 +543,7 @@ describe('button', () => {
       button.disabled = true;
       button.onUp();
 
-      expect(button.pressed).to.be.true;
+      expect(button.pressed).toBe(true);
     });
   });
 });

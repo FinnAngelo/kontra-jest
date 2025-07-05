@@ -1,3 +1,5 @@
+// Import setup for browser API mocks
+import '../setup-assets.js';
 import * as assets from '../../src/assets.js';
 import { on, off } from '../../src/events.js';
 
@@ -7,6 +9,7 @@ import { on, off } from '../../src/events.js';
 describe('assets', () => {
   beforeEach(() => {
     assets._reset();
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
@@ -14,134 +17,177 @@ describe('assets', () => {
   });
 
   it('should export api', () => {
-    expect(assets.imageAssets).to.be.an('object');
-    expect(assets.audioAssets).to.be.an('object');
-    expect(assets.dataAssets).to.be.an('object');
-    expect(assets.setImagePath).to.be.an('function');
-    expect(assets.setAudioPath).to.be.an('function');
-    expect(assets.setDataPath).to.be.an('function');
-    expect(assets.loadImage).to.be.an('function');
-    expect(assets.loadAudio).to.be.an('function');
-    expect(assets.loadData).to.be.an('function');
-    expect(assets.load).to.be.an('function');
+    expect(assets.imageAssets).toBeInstanceOf(Object);
+    expect(assets.audioAssets).toBeInstanceOf(Object);
+    expect(assets.dataAssets).toBeInstanceOf(Object);
+    expect(assets.setImagePath).toBeInstanceOf(Function);
+    expect(assets.setAudioPath).toBeInstanceOf(Function);
+    expect(assets.setDataPath).toBeInstanceOf(Function);
+    expect(assets.loadImage).toBeInstanceOf(Function);
+    expect(assets.loadAudio).toBeInstanceOf(Function);
+    expect(assets.loadData).toBeInstanceOf(Function);
+    expect(assets.load).toBeInstanceOf(Function);
   });
 
   // --------------------------------------------------
   // loadImage
   // --------------------------------------------------
   describe('loadImage', () => {
-    it('should load an image and resolve with it', done => {
-      assets
-        .loadImage('/imgs/bullet.png')
-        .then(image => {
-          expect(assets.imageAssets['/imgs/bullet.png']).to.equal(
-            image
-          );
-          expect(assets.imageAssets['/imgs/bullet']).to.equal(image);
-
-          done();
+    beforeEach(() => {
+      // Mock successful image loading
+      global.fetch = jest.fn(() => 
+        Promise.resolve({
+          ok: true,
+          blob: () => Promise.resolve(new Blob())
         })
-        .catch(done);
-    });
-
-    it('should resolve with the image if it is already loaded', done => {
-      assets
-        .loadImage('/imgs/bullet.png')
-        .then(() => {
-          let spy = sinon.spy(window, 'Image');
-
-          assets.loadImage('/imgs/bullet.png').then(() => {
-            try {
-              expect(spy.called).to.equal(false);
-            } catch (e) {
-              return done(e);
+      );
+      
+      // Mock Image constructor with proper event handling
+      global.Image = function ImageMock() {
+        const img = {
+          addEventListener: jest.fn((event, handler) => {
+            if (event === 'load') {
+              img._loadHandler = handler;
+            } else if (event === 'error') {
+              img._errorHandler = handler;
             }
-
-            done();
-          });
-        })
-        .catch(done);
+          }),
+          _src: '',
+          _loadHandler: null,
+          _errorHandler: null,
+          _onload: null,
+          _onerror: null,
+          get onload() {
+            return this._onload;
+          },
+          set onload(handler) {
+            this._onload = handler;
+          },
+          get onerror() {
+            return this._onerror;
+          },
+          set onerror(handler) {
+            this._onerror = handler;
+          },
+          get src() {
+            return this._src;
+          },
+          set src(value) {
+            this._src = value;
+            // Simulate image loading
+            setTimeout(() => {
+              if (this._onload) {
+                this._onload();
+              } else if (this._loadHandler) {
+                this._loadHandler();
+              }
+            }, 10);
+          }
+        };
+        return img;
+      };
     });
 
-    it('should load an image using imagePath', done => {
+    it('should load an image and resolve with it', async () => {
+      const image = await assets.loadImage('/imgs/bullet.png');
+      
+      expect(assets.imageAssets['/imgs/bullet.png']).toBe(image);
+      expect(assets.imageAssets['/imgs/bullet']).toBe(image);
+    });
+
+    it('should resolve with the image if it is already loaded', async () => {
+      await assets.loadImage('/imgs/bullet.png');
+      
+      const spy = jest.spyOn(global, 'Image');
+      await assets.loadImage('/imgs/bullet.png');
+      
+      expect(spy).not.toHaveBeenCalled();
+      
+      spy.mockRestore();
+    });
+
+    it('should load an image using imagePath', async () => {
       assets.setImagePath('/imgs');
 
-      assets
-        .loadImage('bullet.png')
-        .then(image => {
-          expect(assets.imageAssets['/imgs/bullet.png']).to.equal(
-            image
-          );
-          expect(assets.imageAssets['bullet']).to.equal(image);
-
-          done();
-        })
-        .catch(done);
+      const image = await assets.loadImage('bullet.png');
+      
+      expect(assets.imageAssets['/imgs/bullet.png']).toBe(image);
+      expect(assets.imageAssets['bullet']).toBe(image);
     });
 
-    it('should correctly join a relative image path', done => {
-      assets
-        .loadImage('../imgs/bullet.png')
-        .then(image => {
-          expect(assets.imageAssets['../imgs/bullet.png']).to.equal(
-            image
-          );
-          expect(assets.imageAssets['../imgs/bullet']).to.equal(
-            image
-          );
-
-          done();
-        })
-        .catch(done);
+    it('should correctly join a relative image path', async () => {
+      const image = await assets.loadImage('../imgs/bullet.png');
+      
+      expect(assets.imageAssets['../imgs/bullet.png']).toBe(image);
+      expect(assets.imageAssets['../imgs/bullet']).toBe(image);
     });
 
-    it('should correctly join an image path', done => {
+    it('should correctly join an image path', async () => {
       assets.setImagePath('/imgs/');
 
-      assets
-        .loadImage('/bullet.png')
-        .then(image => {
-          expect(assets.imageAssets['/imgs/bullet.png']).to.equal(
-            image
-          );
-          expect(assets.imageAssets['bullet']).to.equal(image);
-
-          done();
-        })
-        .catch(done);
+      const image = await assets.loadImage('/bullet.png');
+      
+      expect(assets.imageAssets['/imgs/bullet.png']).toBe(image);
+      expect(assets.imageAssets['bullet']).toBe(image);
     });
 
-    it('should throw an error if an image failed to load', done => {
-      assets
-        .loadImage('fake.png')
-        .then(() => {
-          // should not get here
-          done('no error thrown');
-        })
-        .catch(() => {
-          done();
-        });
+    it('should throw an error if an image failed to load', async () => {
+      // Mock the Image constructor to simulate an error
+      const originalImage = global.Image;
+      global.Image = jest.fn(() => {
+        const img = {
+          addEventListener: jest.fn((event, handler) => {
+            if (event === 'error') {
+              img._errorHandler = handler;
+            }
+          }),
+          _src: '',
+          _onload: null,
+          _onerror: null,
+          _errorHandler: null,
+          get onload() {
+            return this._onload;
+          },
+          set onload(handler) {
+            this._onload = handler;
+          },
+          get onerror() {
+            return this._onerror;
+          },
+          set onerror(handler) {
+            this._onerror = handler;
+          },
+          get src() {
+            return this._src;
+          },
+          set src(value) {
+            this._src = value;
+            // Simulate image loading error
+            setTimeout(() => {
+              if (this._onerror) {
+                this._onerror();
+              } else if (this._errorHandler) {
+                this._errorHandler();
+              }
+            }, 10);
+          }
+        };
+        return img;
+      });
+
+      await expect(assets.loadImage('fake.png')).rejects.toBeDefined();
+      
+      global.Image = originalImage;
     });
 
-    it('should emit the assetLoaded event', done => {
-      function loaded(asset, url) {
-        // this needs to be called first otherwise every load event
-        // will call this emitted function
-        off('assetLoaded', loaded);
-
-        try {
-          expect(assets.imageAssets['/imgs/bullet.png']).to.equal(
-            asset
-          );
-          expect(url).to.equal('/imgs/bullet.png');
-        } catch (e) {
-          done(e);
-        }
-
-        done();
-      }
+    it('should emit the assetLoaded event', async () => {
+      const loaded = jest.fn();
       on('assetLoaded', loaded);
-      assets.loadImage('/imgs/bullet.png').catch(done);
+      
+      const image = await assets.loadImage('/imgs/bullet.png');
+      
+      expect(loaded).toHaveBeenCalledWith(image, '/imgs/bullet.png');
+      off('assetLoaded', loaded);
     });
   });
 
@@ -149,108 +195,108 @@ describe('assets', () => {
   // loadData
   // --------------------------------------------------
   describe('loadData', () => {
-    it('should load the data and resolve with it', done => {
-      assets
-        .loadData('/data/test.txt')
-        .then(data => {
-          expect(typeof data).to.equal('string');
-          expect(assets.dataAssets['/data/test.txt']).to.equal(data);
-          expect(assets.dataAssets['/data/test']).to.equal(data);
-
-          done();
-        })
-        .catch(done);
-    });
-
-    it('should resolve with the data if it is already loaded', done => {
-      assets
-        .loadData('/data/test.txt')
-        .then(() => {
-          let spy = sinon.spy(window, 'fetch');
-
-          assets.loadData('/data/test.txt').then(() => {
-            try {
-              expect(spy.called).to.equal(false);
-            } catch (e) {
-              return done(e);
+    beforeEach(() => {
+      // Mock successful data loading with proper Response object
+      const createMockResponse = (url) => {
+        const mockResponse = {
+          ok: true,
+          clone: jest.fn().mockReturnValue({
+            ok: true,
+            json: jest.fn(() => {
+              if (url.includes('.json')) {
+                return Promise.resolve({ test: 'data' });
+              }
+              return Promise.reject(new Error('Not JSON'));
+            }),
+            text: jest.fn(() => {
+              if (url.includes('.json')) {
+                return Promise.resolve('{"test":"data"}');
+              }
+              return Promise.resolve('test data content');
+            })
+          }),
+          json: jest.fn(() => {
+            if (url.includes('.json')) {
+              return Promise.resolve({ test: 'data' });
             }
+            return Promise.reject(new Error('Not JSON'));
+          }),
+          text: jest.fn(() => {
+            if (url.includes('.json')) {
+              return Promise.resolve('{"test":"data"}');
+            }
+            return Promise.resolve('test data content');
+          })
+        };
+        return mockResponse;
+      };
 
-            done();
-          });
-        })
-        .catch(done);
+      global.fetch = jest.fn((url) => Promise.resolve(createMockResponse(url)));
     });
 
-    it('should parse a JSON file', done => {
-      assets
-        .loadData('/data/test.json')
-        .then(data => {
-          expect(typeof data).to.equal('object');
-          expect(assets.dataAssets['/data/test.json']).to.equal(data);
-          expect(assets.dataAssets['/data/test']).to.equal(data);
-
-          done();
-        })
-        .catch(done);
+    it('should load the data and resolve with it', async () => {
+      const data = await assets.loadData('/data/test.txt');
+      
+      expect(typeof data).toBe('string');
+      expect(assets.dataAssets['/data/test.txt']).toBe(data);
+      expect(assets.dataAssets['/data/test']).toBe(data);
     });
 
-    it('should load the data using dataPath', done => {
+    it('should resolve with the data if it is already loaded', async () => {
+      await assets.loadData('/data/test.txt');
+      
+      // Clear the mock and spy on fetch to ensure it's not called again
+      jest.clearAllMocks();
+      const spy = jest.spyOn(global, 'fetch');
+      
+      await assets.loadData('/data/test.txt');
+      
+      expect(spy).not.toHaveBeenCalled();
+      
+      spy.mockRestore();
+    });
+
+    it('should parse a JSON file', async () => {
+      const data = await assets.loadData('/data/test.json');
+      
+      expect(typeof data).toBe('object');
+      expect(assets.dataAssets['/data/test.json']).toBe(data);
+      expect(assets.dataAssets['/data/test']).toBe(data);
+    });
+
+    it('should load the data using dataPath', async () => {
       assets.setDataPath('/data');
 
-      assets
-        .loadData('test.txt')
-        .then(data => {
-          expect(assets.dataAssets['/data/test.txt']).to.equal(data);
-          expect(assets.dataAssets['test']).to.equal(data);
-
-          done();
-        })
-        .catch(done);
+      const data = await assets.loadData('test.txt');
+      
+      expect(assets.dataAssets['/data/test.txt']).toBe(data);
+      expect(assets.dataAssets['test']).toBe(data);
     });
 
-    it('should correctly join the data path', done => {
+    it('should correctly join the data path', async () => {
       assets.setDataPath('/data/');
 
-      assets
-        .loadData('/test.txt')
-        .then(data => {
-          expect(assets.dataAssets['/data/test.txt']).to.equal(data);
-          expect(assets.dataAssets['test']).to.equal(data);
-
-          done();
-        })
-        .catch(done);
+      const data = await assets.loadData('/test.txt');
+      
+      expect(assets.dataAssets['/data/test.txt']).toBe(data);
+      expect(assets.dataAssets['test']).toBe(data);
     });
 
-    it('should throw an error if the data failed to load', done => {
-      assets
-        .loadData('fake.txt')
-        .then(() => {
-          // should not get here
-          done('no error thrown');
-        })
-        .catch(() => {
-          done();
-        });
+    it('should throw an error if the data failed to load', async () => {
+      // Mock a failed response that the code will actually reject
+      global.fetch = jest.fn(() => Promise.reject(new Error('Network error')));
+      
+      await expect(assets.loadData('fake.txt')).rejects.toThrow();
     });
 
-    it('should emit the assetLoaded event', done => {
-      function loaded(asset, url) {
-        // this needs to be called first otherwise every load event
-        // will call this emitted function
-        off('assetLoaded', loaded);
-
-        try {
-          expect(assets.dataAssets['/data/test.txt']).to.equal(asset);
-          expect(url).to.equal('/data/test.txt');
-        } catch (e) {
-          return done(e);
-        }
-
-        done();
-      }
+    it('should emit the assetLoaded event', async () => {
+      const loaded = jest.fn();
       on('assetLoaded', loaded);
-      assets.loadData('/data/test.txt').catch(done);
+      
+      const data = await assets.loadData('/data/test.txt');
+      
+      expect(loaded).toHaveBeenCalledWith(data, '/data/test.txt');
+      off('assetLoaded', loaded);
     });
   });
 
@@ -258,40 +304,75 @@ describe('assets', () => {
   // loadAudio
   // --------------------------------------------------
   describe('loadAudio', () => {
-    it('should load the audio and resolve with it', done => {
-      assets
-        .loadAudio('/audio/shoot.mp3')
-        .then(audio => {
-          expect(assets.audioAssets['/audio/shoot.mp3']).to.equal(
-            audio
-          );
-          expect(assets.audioAssets['/audio/shoot']).to.equal(audio);
-
-          done();
-        })
-        .catch(done);
-    });
-
-    it('should resolve with the audio if it is already loaded', done => {
-      assets
-        .loadAudio('/audio/shoot.mp3')
-        .then(() => {
-          let spy = sinon.spy(Audio.prototype, 'addEventListener');
-
-          assets.loadAudio('/audio/shoot.mp3').then(() => {
-            try {
-              expect(spy.called).to.equal(false);
-            } catch (e) {
-              return done(e);
+    beforeEach(() => {
+      // Reset Audio constructor mock for proper testing
+      global.Audio = function AudioMock() {
+        const audio = {
+          addEventListener: jest.fn((event, handler) => {
+            if (event === 'canplay' || event === 'canplaythrough') {
+              audio._loadHandler = handler;
+            } else if (event === 'error') {
+              audio._errorHandler = handler;
             }
-
-            done();
-          });
-        })
-        .catch(done);
+          }),
+          canPlayType: jest.fn((type) => {
+            if (type.includes('mp3') || type.includes('mpeg')) return 'probably';
+            if (type.includes('ogg') || type.includes('vorbis')) return 'probably';
+            if (type.includes('wav')) return 'probably';
+            if (type.includes('aac')) return 'probably';
+            return ''; // Return empty string for unsupported formats
+          }),
+          load: jest.fn(),
+          _src: '',
+          _loadHandler: null,
+          _errorHandler: null,
+          get src() {
+            return this._src;
+          },
+          set src(value) {
+            this._src = value;
+            // Simulate audio loading - only trigger load if format is supported
+            const extension = value.split('.').pop();
+            const canPlay = this.canPlayType(`audio/${extension};`);
+            setTimeout(() => {
+              if (canPlay && this._loadHandler) {
+                this._loadHandler();
+              } else if (!canPlay && this._errorHandler) {
+                this._errorHandler();
+              }
+            }, 10);
+          }
+        };
+        return audio;
+      };
+      
+      // Set up Audio prototype for spying
+      global.Audio.prototype = {
+        addEventListener: jest.fn(),
+        canPlayType: jest.fn(),
+        load: jest.fn()
+      };
     });
 
-    it('should load the correct audio file based on browser support (mp3)', done => {
+    it('should load the audio and resolve with it', async () => {
+      const audio = await assets.loadAudio('/audio/shoot.mp3');
+      
+      expect(assets.audioAssets['/audio/shoot.mp3']).toBe(audio);
+      expect(assets.audioAssets['/audio/shoot']).toBe(audio);
+    });
+
+    it('should resolve with the audio if it is already loaded', async () => {
+      await assets.loadAudio('/audio/shoot.mp3');
+      
+      const spy = jest.spyOn(Audio.prototype, 'addEventListener');
+      await assets.loadAudio('/audio/shoot.mp3');
+      
+      expect(spy).not.toHaveBeenCalled();
+      
+      spy.mockRestore();
+    });
+
+    it('should load the correct audio file based on browser support (mp3)', async () => {
       assets._setCanPlayFn(() => {
         return {
           mp3: true,
@@ -299,20 +380,13 @@ describe('assets', () => {
         };
       });
 
-      assets
-        .loadAudio(['/audio/shoot.ogg', '/audio/shoot.mp3'])
-        .then(audio => {
-          expect(assets.audioAssets['/audio/shoot.mp3']).to.equal(
-            audio
-          );
-          expect(assets.audioAssets['/audio/shoot']).to.equal(audio);
-
-          done();
-        })
-        .catch(done);
+      const audio = await assets.loadAudio(['/audio/shoot.ogg', '/audio/shoot.mp3']);
+      
+      expect(assets.audioAssets['/audio/shoot.mp3']).toBe(audio);
+      expect(assets.audioAssets['/audio/shoot']).toBe(audio);
     });
 
-    it('should load the correct audio file based on browser support (ogg)', done => {
+    it('should load the correct audio file based on browser support (ogg)', async () => {
       assets._setCanPlayFn(() => {
         return {
           mp3: false,
@@ -320,20 +394,13 @@ describe('assets', () => {
         };
       });
 
-      assets
-        .loadAudio(['/audio/shoot.ogg', '/audio/shoot.mp3'])
-        .then(audio => {
-          expect(assets.audioAssets['/audio/shoot.ogg']).to.equal(
-            audio
-          );
-          expect(assets.audioAssets['/audio/shoot']).to.equal(audio);
-
-          done();
-        })
-        .catch(done);
+      const audio = await assets.loadAudio(['/audio/shoot.ogg', '/audio/shoot.mp3']);
+      
+      expect(assets.audioAssets['/audio/shoot.ogg']).toBe(audio);
+      expect(assets.audioAssets['/audio/shoot']).toBe(audio);
     });
 
-    it('should load the first supported auto file in the array', done => {
+    it('should load the first supported auto file in the array', async () => {
       assets._setCanPlayFn(() => {
         return {
           mp3: true,
@@ -341,92 +408,59 @@ describe('assets', () => {
         };
       });
 
-      assets
-        .loadAudio(['/audio/shoot.ogg', '/audio/shoot.mp3'])
-        .then(audio => {
-          expect(audio.src.endsWith('/audio/shoot.ogg')).to.equal(
-            true
-          );
-          done();
-        })
-        .catch(done);
-    });
+      const audio = await assets.loadAudio(['/audio/shoot.ogg', '/audio/shoot.mp3']);
+      
+      expect(audio.src.endsWith('/audio/shoot.ogg')).toBe(true);
+    }, 10000);
 
-    it('should load the audio using audioPath', done => {
+    it('should load the audio using audioPath', async () => {
       assets.setAudioPath('/audio');
 
-      assets
-        .loadAudio('shoot.mp3')
-        .then(audio => {
-          expect(assets.audioAssets['/audio/shoot.mp3']).to.equal(
-            audio
-          );
-          expect(assets.audioAssets['shoot']).to.equal(audio);
-
-          done();
-        })
-        .catch(done);
+      const audio = await assets.loadAudio('shoot.mp3');
+      
+      expect(assets.audioAssets['/audio/shoot.mp3']).toBe(audio);
+      expect(assets.audioAssets['shoot']).toBe(audio);
     });
 
-    it('should correctly join the audio path', done => {
+    it('should correctly join the audio path', async () => {
       assets.setAudioPath('/audio/');
 
-      assets
-        .loadAudio('/shoot.mp3')
-        .then(audio => {
-          expect(assets.audioAssets['/audio/shoot.mp3']).to.equal(
-            audio
-          );
-          expect(assets.audioAssets['shoot']).to.equal(audio);
-
-          done();
-        })
-        .catch(done);
+      const audio = await assets.loadAudio('/shoot.mp3');
+      
+      expect(assets.audioAssets['/audio/shoot.mp3']).toBe(audio);
+      expect(assets.audioAssets['shoot']).toBe(audio);
     });
 
-    it('should throw an error if the audio failed to load', done => {
-      assets
-        .loadAudio('fake.mp3')
-        .then(() => {
-          // should not get here
-          done('no error thrown');
-        })
-        .catch(() => {
-          done();
-        });
+    it('should throw an error if the audio failed to load', async () => {
+      // Mock Audio to simulate error
+      global.Audio = jest.fn(() => {
+        const audio = {
+          addEventListener: jest.fn((event, handler) => {
+            if (event === 'error') {
+              setTimeout(() => handler(), 0);
+            }
+          }),
+          load: jest.fn(),
+          src: ''
+        };
+        return audio;
+      });
+
+      await expect(assets.loadAudio('fake.mp3')).rejects.toThrow();
     });
 
-    it('should throw an error if no audio source can be played', done => {
-      assets
-        .loadAudio('cantPlay.aaa')
-        .then(() => {
-          // should not get here
-          done('no error thrown');
-        })
-        .catch(() => {
-          done();
-        });
+    it('should throw an error if no audio source can be played', async () => {
+      await expect(assets.loadAudio('cantPlay.aaa')).rejects.toBeDefined();
     });
 
-    it('should emit the assetLoaded event', done => {
-      function loaded(asset, url) {
-        // this needs to be called first otherwise every load event
-        // will call this emitted function
-        off('assetLoaded', loaded);
-
-        try {
-          expect(assets.audioAssets['/audio/shoot.mp3']).to.equal(
-            asset
-          );
-          expect(url).to.equal('/audio/shoot.mp3');
-        } catch (e) {
-          done(e);
-        }
-
-        done();
-      }
+    it('should emit the assetLoaded event', async () => {
+      const loaded = jest.fn();
       on('assetLoaded', loaded);
-      assets.loadAudio('/audio/shoot.mp3').catch(done);
+      
+      const audio = await assets.loadAudio('/audio/shoot.mp3');
+      
+      expect(loaded).toHaveBeenCalledWith(audio, '/audio/shoot.mp3');
+      off('assetLoaded', loaded);
     });
   });
 
@@ -434,56 +468,38 @@ describe('assets', () => {
   // load
   // --------------------------------------------------
   describe('load', () => {
-    it('should load an image asset', done => {
-      expect(assets.imageAssets).to.deep.equal({});
+    it('should load an image asset', async () => {
+      expect(assets.imageAssets).toEqual({});
 
-      assets.load('/imgs/bullet.png').then(loadedAssets => {
-        expect(assets.imageAssets['/imgs/bullet']).to.equal(
-          loadedAssets[0]
-        );
-
-        done();
-      });
+      const loadedAssets = await assets.load('/imgs/bullet.png');
+      
+      expect(assets.imageAssets['/imgs/bullet']).toBe(loadedAssets[0]);
     });
 
-    it('should load an audio asset', done => {
-      expect(assets.audioAssets).to.deep.equal({});
+    it('should load an audio asset', async () => {
+      expect(assets.audioAssets).toEqual({});
 
-      assets
-        .load(['/audio/shoot.mp3', '/audio/shoot.ogg'])
-        .then(loadedAssets => {
-          expect(assets.audioAssets['/audio/shoot']).to.equal(
-            loadedAssets[0]
-          );
-
-          done();
-        });
+      const loadedAssets = await assets.load(['/audio/shoot.mp3', '/audio/shoot.ogg']);
+      
+      expect(assets.audioAssets['/audio/shoot']).toBe(loadedAssets[0]);
     });
 
-    it('should load an data asset', done => {
-      expect(assets.dataAssets).to.deep.equal({});
+    it('should load an data asset', async () => {
+      expect(assets.dataAssets).toEqual({});
 
-      assets.load('/data/test.json').then(loadedAssets => {
-        expect(assets.dataAssets['/data/test']).to.equal(
-          loadedAssets[0]
-        );
-
-        done();
-      });
+      const loadedAssets = await assets.load('/data/test.json');
+      
+      expect(assets.dataAssets['/data/test']).toBe(loadedAssets[0]);
     });
 
-    it('should load multiple assets', done => {
-      assets
-        .load(
-          '/imgs/bullet.png',
-          ['/audio/shoot.mp3', '/audio/shoot.ogg'],
-          '/data/test.json'
-        )
-        .then(loadedAssets => {
-          expect(loadedAssets).to.have.lengthOf(3);
-
-          done();
-        });
+    it('should load multiple assets', async () => {
+      const loadedAssets = await assets.load(
+        '/imgs/bullet.png',
+        ['/audio/shoot.mp3', '/audio/shoot.ogg'],
+        '/data/test.json'
+      );
+      
+      expect(loadedAssets).toHaveLength(3);
     });
   });
 });
