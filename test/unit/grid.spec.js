@@ -6,7 +6,7 @@ import { getCanvas } from '../../src/core.js';
 // --------------------------------------------------
 describe('grid', () => {
   it('should export class', () => {
-    expect(GridClass).to.be.a('function');
+    expect(GridClass).toEqual(expect.any(Function));
   });
 
   // --------------------------------------------------
@@ -16,14 +16,14 @@ describe('grid', () => {
     it('should set default properties', () => {
       let grid = Grid();
 
-      expect(grid.flow).to.equal('column');
-      expect(grid.align).to.equal('start');
-      expect(grid.justify).to.equal('start');
-      expect(grid.colGap).to.equal(0);
-      expect(grid.rowGap).to.equal(0);
-      expect(grid.numCols).to.equal(1);
-      expect(grid.dir).to.equal('');
-      expect(grid.breakpoints).to.deep.equal([]);
+      expect(grid.flow).toBe('column');
+      expect(grid.align).toBe('start');
+      expect(grid.justify).toBe('start');
+      expect(grid.colGap).toBe(0);
+      expect(grid.rowGap).toBe(0);
+      expect(grid.numCols).toBe(1);
+      expect(grid.dir).toBe('');
+      expect(grid.breakpoints).toEqual([]);
     });
 
     it('should set properties', () => {
@@ -37,13 +37,13 @@ describe('grid', () => {
         dir: 'rtl'
       });
 
-      expect(grid.flow).to.equal('grid');
-      expect(grid.align).to.equal('end');
-      expect(grid.justify).to.equal('center');
-      expect(grid.colGap).to.equal(10);
-      expect(grid.rowGap).to.deep.equal([20, 30]);
-      expect(grid.numCols).to.equal(3);
-      expect(grid.dir).to.equal('rtl');
+      expect(grid.flow).toBe('grid');
+      expect(grid.align).toBe('end');
+      expect(grid.justify).toBe('center');
+      expect(grid.colGap).toBe(10);
+      expect(grid.rowGap).toEqual([20, 30]);
+      expect(grid.numCols).toBe(3);
+      expect(grid.dir).toBe('rtl');
     });
   });
 
@@ -53,7 +53,7 @@ describe('grid', () => {
   describe('destroy', () => {
     it('should call destroy for each child', () => {
       let child = {
-        destroy: sinon.spy()
+        destroy: jest.fn()
       };
       let grid = Grid({
         children: [child]
@@ -61,7 +61,7 @@ describe('grid', () => {
 
       grid.destroy();
 
-      expect(child.destroy.called).to.be.true;
+      expect(child.destroy).toHaveBeenCalled();
     });
   });
 
@@ -101,76 +101,76 @@ describe('grid', () => {
       });
 
       it('should set the width to the largest width', () => {
-        expect(grid.width).to.equal(100);
+        expect(grid.width).toBe(100);
       });
 
       it('should set the height to the total height', () => {
-        expect(grid.height).to.equal(250);
+        expect(grid.height).toBe(250);
       });
 
       it('should set position of each child', () => {
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(0);
-        expect(child2.y).to.equal(25);
+        expect(child2.x).toBe(0);
+        expect(child2.y).toBe(25);
 
-        expect(child3.x).to.equal(0);
-        expect(child3.y).to.equal(125);
+        expect(child3.x).toBe(0);
+        expect(child3.y).toBe(125);
 
-        expect(child4.x).to.equal(0);
-        expect(child4.y).to.equal(175);
+        expect(child4.x).toBe(0);
+        expect(child4.y).toBe(175);
       });
 
       it('should take into account rowGap', () => {
         grid.rowGap = 10;
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(0);
-        expect(child2.y).to.equal(35);
+        expect(child2.x).toBe(0);
+        expect(child2.y).toBe(35);
 
-        expect(child3.x).to.equal(0);
-        expect(child3.y).to.equal(145);
+        expect(child3.x).toBe(0);
+        expect(child3.y).toBe(145);
 
-        expect(child4.x).to.equal(0);
-        expect(child4.y).to.equal(205);
+        expect(child4.x).toBe(0);
+        expect(child4.y).toBe(205);
       });
 
       it('should take into account rowGap array', () => {
         grid.rowGap = [10, 5];
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(0);
-        expect(child2.y).to.equal(35);
+        expect(child2.x).toBe(0);
+        expect(child2.y).toBe(35);
 
-        expect(child3.x).to.equal(0);
-        expect(child3.y).to.equal(140);
+        expect(child3.x).toBe(0);
+        expect(child3.y).toBe(140);
 
-        expect(child4.x).to.equal(0);
-        expect(child4.y).to.equal(200);
+        expect(child4.x).toBe(0);
+        expect(child4.y).toBe(200);
       });
 
       it('should take into account grid anchor', () => {
         grid.anchor = { x: 0.5, y: 0.5 };
         grid.render();
 
-        expect(child1.x).to.equal(-50);
-        expect(child1.y).to.equal(-125);
+        expect(child1.x).toBe(-50);
+        expect(child1.y).toBe(-125);
 
-        expect(child2.x).to.equal(-50);
-        expect(child2.y).to.equal(-100);
+        expect(child2.x).toBe(-50);
+        expect(child2.y).toBe(-100);
 
-        expect(child3.x).to.equal(-50);
-        expect(child3.y).to.equal(0);
+        expect(child3.x).toBe(-50);
+        expect(child3.y).toBe(0);
 
-        expect(child4.x).to.equal(-50);
-        expect(child4.y).to.equal(50);
+        expect(child4.x).toBe(-50);
+        expect(child4.y).toBe(50);
       });
 
       it('should take into account child anchor', () => {
@@ -178,15 +178,15 @@ describe('grid', () => {
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(50);
-        expect(child1.y).to.equal(12.5);
+        expect(child1.x).toBe(50);
+        expect(child1.y).toBe(12.5);
 
         child1.anchor = { x: 1, y: 1 };
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(100);
-        expect(child1.y).to.equal(25);
+        expect(child1.x).toBe(100);
+        expect(child1.y).toBe(25);
       });
 
       it('should take into account child world width and height', () => {
@@ -197,11 +197,11 @@ describe('grid', () => {
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(0);
-        expect(child2.y).to.equal(10);
+        expect(child2.x).toBe(0);
+        expect(child2.y).toBe(10);
       });
     });
 
@@ -237,76 +237,76 @@ describe('grid', () => {
       });
 
       it('should set the width to the total width', () => {
-        expect(grid.width).to.equal(200);
+        expect(grid.width).toBe(200);
       });
 
       it('should set the height to the largest height', () => {
-        expect(grid.height).to.equal(100);
+        expect(grid.height).toBe(100);
       });
 
       it('should set position of each child', () => {
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(100);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(100);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(125);
-        expect(child3.y).to.equal(0);
+        expect(child3.x).toBe(125);
+        expect(child3.y).toBe(0);
 
-        expect(child4.x).to.equal(175);
-        expect(child4.y).to.equal(0);
+        expect(child4.x).toBe(175);
+        expect(child4.y).toBe(0);
       });
 
       it('should take into account colGap', () => {
         grid.colGap = 10;
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(110);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(110);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(145);
-        expect(child3.y).to.equal(0);
+        expect(child3.x).toBe(145);
+        expect(child3.y).toBe(0);
 
-        expect(child4.x).to.equal(205);
-        expect(child4.y).to.equal(0);
+        expect(child4.x).toBe(205);
+        expect(child4.y).toBe(0);
       });
 
       it('should take into account colGap array', () => {
         grid.colGap = [10, 5];
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(110);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(110);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(140);
-        expect(child3.y).to.equal(0);
+        expect(child3.x).toBe(140);
+        expect(child3.y).toBe(0);
 
-        expect(child4.x).to.equal(200);
-        expect(child4.y).to.equal(0);
+        expect(child4.x).toBe(200);
+        expect(child4.y).toBe(0);
       });
 
       it('should take into account grid anchor', () => {
         grid.anchor = { x: 0.5, y: 0.5 };
         grid.render();
 
-        expect(child1.x).to.equal(-100);
-        expect(child1.y).to.equal(-50);
+        expect(child1.x).toBe(-100);
+        expect(child1.y).toBe(-50);
 
-        expect(child2.x).to.equal(0);
-        expect(child2.y).to.equal(-50);
+        expect(child2.x).toBe(0);
+        expect(child2.y).toBe(-50);
 
-        expect(child3.x).to.equal(25);
-        expect(child3.y).to.equal(-50);
+        expect(child3.x).toBe(25);
+        expect(child3.y).toBe(-50);
 
-        expect(child4.x).to.equal(75);
-        expect(child4.y).to.equal(-50);
+        expect(child4.x).toBe(75);
+        expect(child4.y).toBe(-50);
       });
 
       it('should take into account child anchor', () => {
@@ -314,15 +314,15 @@ describe('grid', () => {
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(50);
-        expect(child1.y).to.equal(12.5);
+        expect(child1.x).toBe(50);
+        expect(child1.y).toBe(12.5);
 
         child1.anchor = { x: 1, y: 1 };
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(100);
-        expect(child1.y).to.equal(25);
+        expect(child1.x).toBe(100);
+        expect(child1.y).toBe(25);
       });
 
       it('should take into account child world width and height', () => {
@@ -333,28 +333,28 @@ describe('grid', () => {
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(50);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(50);
+        expect(child2.y).toBe(0);
       });
 
       it('should reverse the order when dir=rtl', () => {
         grid.dir = 'rtl';
         grid.render();
 
-        expect(child1.x).to.equal(100);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(100);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(75);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(75);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(25);
-        expect(child3.y).to.equal(0);
+        expect(child3.x).toBe(25);
+        expect(child3.y).toBe(0);
 
-        expect(child4.x).to.equal(0);
-        expect(child4.y).to.equal(0);
+        expect(child4.x).toBe(0);
+        expect(child4.y).toBe(0);
       });
 
       it('should reverse the order if canvas dir=rtl', () => {
@@ -362,17 +362,17 @@ describe('grid', () => {
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(100);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(100);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(75);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(75);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(25);
-        expect(child3.y).to.equal(0);
+        expect(child3.x).toBe(25);
+        expect(child3.y).toBe(0);
 
-        expect(child4.x).to.equal(0);
-        expect(child4.y).to.equal(0);
+        expect(child4.x).toBe(0);
+        expect(child4.y).toBe(0);
       });
     });
 
@@ -408,76 +408,76 @@ describe('grid', () => {
       });
 
       it('should set the width to the total width of each col', () => {
-        expect(grid.width).to.equal(125);
+        expect(grid.width).toBe(125);
       });
 
       it('should set the height to the total height of each row', () => {
-        expect(grid.height).to.equal(175);
+        expect(grid.height).toBe(175);
       });
 
       it('should set position of each child', () => {
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(100);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(100);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(0);
-        expect(child3.y).to.equal(100);
+        expect(child3.x).toBe(0);
+        expect(child3.y).toBe(100);
 
-        expect(child4.x).to.equal(100);
-        expect(child4.y).to.equal(100);
+        expect(child4.x).toBe(100);
+        expect(child4.y).toBe(100);
       });
 
       it('should take into account colGap', () => {
         grid.colGap = 10;
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(110);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(110);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(0);
-        expect(child3.y).to.equal(100);
+        expect(child3.x).toBe(0);
+        expect(child3.y).toBe(100);
 
-        expect(child4.x).to.equal(110);
-        expect(child4.y).to.equal(100);
+        expect(child4.x).toBe(110);
+        expect(child4.y).toBe(100);
       });
 
       it('should take into account rowGap', () => {
         grid.rowGap = 10;
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(100);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(100);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(0);
-        expect(child3.y).to.equal(110);
+        expect(child3.x).toBe(0);
+        expect(child3.y).toBe(110);
 
-        expect(child4.x).to.equal(100);
-        expect(child4.y).to.equal(110);
+        expect(child4.x).toBe(100);
+        expect(child4.y).toBe(110);
       });
 
       it('should take into account grid anchor', () => {
         grid.anchor = { x: 0.5, y: 0.5 };
         grid.render();
 
-        expect(child1.x).to.equal(-62.5);
-        expect(child1.y).to.equal(-87.5);
+        expect(child1.x).toBe(-62.5);
+        expect(child1.y).toBe(-87.5);
 
-        expect(child2.x).to.equal(37.5);
-        expect(child2.y).to.equal(-87.5);
+        expect(child2.x).toBe(37.5);
+        expect(child2.y).toBe(-87.5);
 
-        expect(child3.x).to.equal(-62.5);
-        expect(child3.y).to.equal(12.5);
+        expect(child3.x).toBe(-62.5);
+        expect(child3.y).toBe(12.5);
 
-        expect(child4.x).to.equal(37.5);
-        expect(child4.y).to.equal(12.5);
+        expect(child4.x).toBe(37.5);
+        expect(child4.y).toBe(12.5);
       });
 
       it('should take into account child anchor', () => {
@@ -485,15 +485,15 @@ describe('grid', () => {
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(50);
-        expect(child1.y).to.equal(12.5);
+        expect(child1.x).toBe(50);
+        expect(child1.y).toBe(12.5);
 
         child1.anchor = { x: 1, y: 1 };
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(100);
-        expect(child1.y).to.equal(25);
+        expect(child1.x).toBe(100);
+        expect(child1.y).toBe(25);
       });
 
       it('should take into account child world width and height', () => {
@@ -504,14 +504,14 @@ describe('grid', () => {
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(50);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(50);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(0);
-        expect(child3.y).to.equal(200);
+        expect(child3.x).toBe(0);
+        expect(child3.y).toBe(200);
       });
     });
 
@@ -549,51 +549,51 @@ describe('grid', () => {
         grid.align = 'center';
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(37.5);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(37.5);
 
-        expect(child2.x).to.equal(100);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(100);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(0);
-        expect(child3.y).to.equal(112.5);
+        expect(child3.x).toBe(0);
+        expect(child3.y).toBe(112.5);
 
-        expect(child4.x).to.equal(100);
-        expect(child4.y).to.equal(100);
+        expect(child4.x).toBe(100);
+        expect(child4.y).toBe(100);
       });
 
       it('should take into account align (end)', () => {
         grid.align = 'end';
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(75);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(75);
 
-        expect(child2.x).to.equal(100);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(100);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(0);
-        expect(child3.y).to.equal(125);
+        expect(child3.x).toBe(0);
+        expect(child3.y).toBe(125);
 
-        expect(child4.x).to.equal(100);
-        expect(child4.y).to.equal(100);
+        expect(child4.x).toBe(100);
+        expect(child4.y).toBe(100);
       });
 
       it('should take into account align array', () => {
         grid.align = ['center', 'end'];
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(37.5);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(37.5);
 
-        expect(child2.x).to.equal(100);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(100);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(0);
-        expect(child3.y).to.equal(125);
+        expect(child3.x).toBe(0);
+        expect(child3.y).toBe(125);
 
-        expect(child4.x).to.equal(100);
-        expect(child4.y).to.equal(100);
+        expect(child4.x).toBe(100);
+        expect(child4.y).toBe(100);
       });
 
       it('should take into account child with `alignSelf`', () => {
@@ -601,8 +601,8 @@ describe('grid', () => {
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(37.5);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(37.5);
       });
     });
 
@@ -640,51 +640,51 @@ describe('grid', () => {
         grid.justify = 'center';
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(100);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(100);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(25);
-        expect(child3.y).to.equal(100);
+        expect(child3.x).toBe(25);
+        expect(child3.y).toBe(100);
 
-        expect(child4.x).to.equal(100);
-        expect(child4.y).to.equal(100);
+        expect(child4.x).toBe(100);
+        expect(child4.y).toBe(100);
       });
 
       it('should take into account justify (end)', () => {
         grid.justify = 'end';
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(100);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(100);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(50);
-        expect(child3.y).to.equal(100);
+        expect(child3.x).toBe(50);
+        expect(child3.y).toBe(100);
 
-        expect(child4.x).to.equal(100);
-        expect(child4.y).to.equal(100);
+        expect(child4.x).toBe(100);
+        expect(child4.y).toBe(100);
       });
 
       it('should take into account justify array', () => {
         grid.justify = ['center', 'end'];
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(100);
-        expect(child2.y).to.equal(0);
+        expect(child2.x).toBe(100);
+        expect(child2.y).toBe(0);
 
-        expect(child3.x).to.equal(25);
-        expect(child3.y).to.equal(100);
+        expect(child3.x).toBe(25);
+        expect(child3.y).toBe(100);
 
-        expect(child4.x).to.equal(100);
-        expect(child4.y).to.equal(100);
+        expect(child4.x).toBe(100);
+        expect(child4.y).toBe(100);
       });
 
       it('should take into account child with `justifySelf`', () => {
@@ -692,8 +692,8 @@ describe('grid', () => {
         grid._d = true;
         grid.render();
 
-        expect(child3.x).to.equal(25);
-        expect(child3.y).to.equal(100);
+        expect(child3.x).toBe(25);
+        expect(child3.y).toBe(100);
       });
     });
 
@@ -733,10 +733,10 @@ describe('grid', () => {
         grid.dir = 'rtl';
         grid.render();
 
-        expect(child4.x).to.equal(0);
-        expect(child3.x).to.equal(40);
-        expect(child2.x).to.equal(100);
-        expect(child1.x).to.equal(130);
+        expect(child4.x).toBe(0);
+        expect(child3.x).toBe(40);
+        expect(child2.x).toBe(100);
+        expect(child1.x).toBe(130);
       });
 
       it('should reverse the order if canvas dir=rtl', () => {
@@ -744,10 +744,10 @@ describe('grid', () => {
         grid._d = true;
         grid.render();
 
-        expect(child4.x).to.equal(0);
-        expect(child3.x).to.equal(40);
-        expect(child2.x).to.equal(100);
-        expect(child1.x).to.equal(130);
+        expect(child4.x).toBe(0);
+        expect(child3.x).toBe(40);
+        expect(child2.x).toBe(100);
+        expect(child1.x).toBe(130);
       });
     });
 
@@ -786,17 +786,17 @@ describe('grid', () => {
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(0);
-        expect(child2.y).to.equal(25);
+        expect(child2.x).toBe(0);
+        expect(child2.y).toBe(25);
 
-        expect(child3.x).to.equal(50);
-        expect(child3.y).to.equal(25);
+        expect(child3.x).toBe(50);
+        expect(child3.y).toBe(25);
 
-        expect(child4.x).to.equal(0);
-        expect(child4.y).to.equal(125);
+        expect(child4.x).toBe(0);
+        expect(child4.y).toBe(125);
       });
 
       it('should reverse the order when dir=rtl and odd number of children', () => {
@@ -805,17 +805,17 @@ describe('grid', () => {
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(75);
-        expect(child2.y).to.equal(25);
+        expect(child2.x).toBe(75);
+        expect(child2.y).toBe(25);
 
-        expect(child3.x).to.equal(0);
-        expect(child3.y).to.equal(25);
+        expect(child3.x).toBe(0);
+        expect(child3.y).toBe(25);
 
-        expect(child4.x).to.equal(75);
-        expect(child4.y).to.equal(125);
+        expect(child4.x).toBe(75);
+        expect(child4.y).toBe(125);
       });
 
       it('should work for colSpan > 2', () => {
@@ -824,17 +824,17 @@ describe('grid', () => {
         grid._d = true;
         grid.render();
 
-        expect(child1.x).to.equal(0);
-        expect(child1.y).to.equal(0);
+        expect(child1.x).toBe(0);
+        expect(child1.y).toBe(0);
 
-        expect(child2.x).to.equal(0);
-        expect(child2.y).to.equal(25);
+        expect(child2.x).toBe(0);
+        expect(child2.y).toBe(25);
 
-        expect(child3.x).to.equal(25);
-        expect(child3.y).to.equal(25);
+        expect(child3.x).toBe(25);
+        expect(child3.y).toBe(25);
 
-        expect(child4.x).to.equal(75);
-        expect(child4.y).to.equal(25);
+        expect(child4.x).toBe(75);
+        expect(child4.y).toBe(25);
       });
     });
 
@@ -843,7 +843,7 @@ describe('grid', () => {
     // --------------------------------------------------
     describe('breakpoints', () => {
       it('should call the callback if the metric returns true', () => {
-        let callback = sinon.spy();
+        let callback = jest.fn();
 
         grid = Grid({
           numCols: 2,
@@ -857,16 +857,16 @@ describe('grid', () => {
           ]
         });
 
-        expect(callback.called).to.be.false;
+        expect(callback).not.toHaveBeenCalled();
 
         grid.setScale(2);
         grid.render();
 
-        expect(callback.called).to.be.true;
+        expect(callback).toHaveBeenCalled();
       });
 
       it("should not call the callback twice if it hasn't changed", () => {
-        let callback = sinon.spy();
+        let callback = jest.fn();
 
         grid = Grid({
           numCols: 2,
@@ -880,7 +880,7 @@ describe('grid', () => {
           ]
         });
 
-        expect(callback.called).to.be.false;
+        expect(callback).not.toHaveBeenCalled();
 
         grid.setScale(2);
         grid.render();
@@ -888,7 +888,7 @@ describe('grid', () => {
         grid.setScale(2);
         grid.render();
 
-        expect(callback.calledTwice).to.be.false;
+        expect(callback).toHaveBeenCalledTimes(1);
       });
     });
   });

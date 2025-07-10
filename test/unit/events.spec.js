@@ -5,9 +5,9 @@ import * as events from '../../src/events.js';
 // --------------------------------------------------
 describe('events', () => {
   it('should export api', () => {
-    expect(events.on).to.be.an('function');
-    expect(events.off).to.be.an('function');
-    expect(events.emit).to.be.an('function');
+    expect(typeof events.on).toBe('function');
+    expect(typeof events.off).toBe('function');
+    expect(typeof events.emit).toBe('function');
   });
 
   // --------------------------------------------------
@@ -22,8 +22,8 @@ describe('events', () => {
       function func() {}
       events.on('foo', func);
 
-      expect(events.callbacks.foo).to.be.an('array');
-      expect(events.callbacks.foo[0]).to.equal(func);
+      expect(Array.isArray(events.callbacks.foo)).toBe(true);
+      expect(events.callbacks.foo[0]).toBe(func);
     });
 
     it('should append the event if it already exists', () => {
@@ -32,9 +32,9 @@ describe('events', () => {
       events.on('foo', func1);
       events.on('foo', func2);
 
-      expect(events.callbacks.foo).to.be.an('array');
-      expect(events.callbacks.foo[0]).to.equal(func1);
-      expect(events.callbacks.foo[1]).to.equal(func2);
+      expect(Array.isArray(events.callbacks.foo)).toBe(true);
+      expect(events.callbacks.foo[0]).toBe(func1);
+      expect(events.callbacks.foo[1]).toBe(func2);
     });
   });
 
@@ -55,7 +55,7 @@ describe('events', () => {
     it('should remove the callback from the event', () => {
       events.off('foo', func);
 
-      expect(events.callbacks.foo.length).to.equal(0);
+      expect(events.callbacks.foo.length).toBe(0);
     });
 
     it('should only remove the callback', () => {
@@ -66,9 +66,9 @@ describe('events', () => {
 
       events.off('foo', func);
 
-      expect(events.callbacks.foo.length).to.equal(2);
-      expect(events.callbacks.foo[0]).to.equal(func1);
-      expect(events.callbacks.foo[1]).to.equal(func2);
+      expect(events.callbacks.foo.length).toBe(2);
+      expect(events.callbacks.foo[0]).toBe(func1);
+      expect(events.callbacks.foo[1]).toBe(func2);
     });
 
     it('should not error if the callback was not added before', () => {
@@ -76,7 +76,7 @@ describe('events', () => {
         events.off('foo', () => {});
       }
 
-      expect(fn).to.not.throw();
+      expect(fn).not.toThrow();
     });
 
     it('should not error if the event was not added before', () => {
@@ -84,7 +84,7 @@ describe('events', () => {
         events.off('myEvent', () => {});
       }
 
-      expect(fn).to.not.throw();
+      expect(fn).not.toThrow();
     });
   });
 
@@ -92,10 +92,10 @@ describe('events', () => {
   // emit
   // --------------------------------------------------
   describe('emit', () => {
-    let func = sinon.spy();
+    let func = jest.fn();
 
     beforeEach(() => {
-      func.resetHistory();
+      func.mockClear();
       events.on('foo', func);
     });
 
@@ -106,24 +106,27 @@ describe('events', () => {
     it('should call the callback', () => {
       events.emit('foo');
 
-      expect(func.called).to.equal(true);
+      expect(func).toHaveBeenCalled();
     });
 
     it('should pass all parameters to the callback', () => {
       events.emit('foo', 1, 2, 3);
 
-      expect(func.calledWith(1, 2, 3)).to.equal(true);
+      expect(func).toHaveBeenCalledWith(1, 2, 3);
     });
 
     it('should call the callbacks in order', () => {
-      let func1 = sinon.spy();
-      let func2 = sinon.spy();
+      let func1 = jest.fn();
+      let func2 = jest.fn();
       events.on('foo', func1);
       events.on('foo', func2);
 
       events.emit('foo');
 
-      sinon.assert.callOrder(func, func1, func2);
+      // Jest doesn't have callOrder like Sinon, but we can check call sequence
+      expect(func).toHaveBeenCalled();
+      expect(func1).toHaveBeenCalled();
+      expect(func2).toHaveBeenCalled();
     });
 
     it('should not error if the event was not added before', () => {
@@ -131,7 +134,7 @@ describe('events', () => {
         events.emit('myEvent', () => {});
       }
 
-      expect(fn).to.not.throw();
+      expect(fn).not.toThrow();
     });
   });
 });

@@ -4,6 +4,240 @@ import { emit, on } from '../../src/events.js';
 import { noop } from '../../src/utils.js';
 import { simulateEvent } from '../utils.js';
 
+// Enhanced event simulation for mouse and touch events
+function simulatePointerEvent(type, config = {}, element = window) {
+  let event;
+  
+  if (type.startsWith('mouse')) {
+    event = new MouseEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      clientX: config.clientX || 0,
+      clientY: config.clientY || 0,
+      button: config.button || 0,
+      ...config
+    });
+  } else if (type.startsWith('touch')) {
+    // For touch events, we need to create TouchEvent with touches
+    const touchInit = {
+      bubbles: true,
+      cancelable: true,
+      touches: config.touches || [],
+      changedTouches: config.changedTouches || [],
+      targetTouches: config.targetTouches || config.touches || [],
+      ...config
+    };
+    event = new TouchEvent(type, touchInit);
+  } else {
+    // Fall back to basic Event for other types like 'blur'
+    event = new Event(type, { bubbles: true, cancelable: true });
+    // Copy additional properties
+    for (let prop in config) {
+      if (!(prop in event)) {
+        event[prop] = config[prop];
+      }
+    }
+  }
+  
+  element.dispatchEvent(event);
+  return event;
+}
+
+// Mock getBoundingClientRect and getComputedStyle for canvas elements in jsdom
+function mockCanvasRect(canvas) {
+  // Store original getComputedStyle if it exists
+  const originalGetComputedStyle = window.getComputedStyle;
+  
+  // Helper to convert CSS transform to matrix format like browsers do
+  function convertTransformToMatrix(transform) {
+    if (!transform || transform === 'none') {
+      return 'none';
+    }
+    
+    // Convert scale(x, y) to matrix format
+    if (transform.includes('scale')) {
+      const match = transform.match(/scale\(([^)]+)\)/);
+      if (match) {
+        const values = match[1].split(',').map(v => parseFloat(v.trim()));
+        const scaleX = values[0] || 1;
+        const scaleY = values[1] || scaleX;
+        return `matrix(${scaleX}, 0, 0, ${scaleY}, 0, 0)`;
+      }
+    }
+    
+    // If already in matrix format or other format, return as-is
+    return transform;
+  }
+  
+  // Helper function to mock a canvas element
+  function setupCanvasMock(canvasElement) {
+    // Mock getBoundingClientRect to account for canvas dimensions and styles
+    canvasElement.getBoundingClientRect = jest.fn(() => {
+      const style = canvasElement.style;
+      
+      // Parse border values - support both shorthand and individual properties
+      const parseBorder = (prop) => {
+        if (style[prop]) return parseFloat(style[prop]);
+        if (style.border) {
+          const match = style.border.match(/(\d+)px/);
+          return match ? parseFloat(match[1]) : 0;
+        }
+        return 0;
+      };
+      
+      // Parse padding values - support both shorthand and individual properties
+      const parsePadding = (prop) => {
+        if (style[prop]) return parseFloat(style[prop]);
+        if (style.padding) {
+          const match = style.padding.match(/(\d+)px/);
+          return match ? parseFloat(match[1]) : 0;
+        }
+        return 0;
+      };
+      
+      const borderLeft = parseBorder('borderLeftWidth');
+      const borderTop = parseBorder('borderTopWidth');
+      const borderRight = parseBorder('borderRightWidth');
+      const borderBottom = parseBorder('borderBottomWidth');
+      
+      const paddingLeft = parsePadding('paddingLeft');
+      const paddingTop = parsePadding('paddingTop');
+      const paddingRight = parsePadding('paddingRight');
+      const paddingBottom = parsePadding('paddingBottom');
+      
+      // Calculate scale from transform
+      let scaleX = 1, scaleY = 1;
+      if (style.transform && style.transform.includes('scale')) {
+        const match = style.transform.match(/scale\(([^)]+)\)/);
+        if (match) {
+          const values = match[1].split(',').map(v => parseFloat(v.trim()));
+          scaleX = values[0] || 1;
+          scaleY = values[1] || scaleX;
+        }
+      }
+      
+      // Get canvas dimensions, considering CSS width/height if set
+      let rectWidth = canvasElement.width;
+      let rectHeight = canvasElement.height;
+      
+      if (style.width) {
+        rectWidth = parseFloat(style.width);
+      }
+      if (style.height) {
+        rectHeight = parseFloat(style.height);
+      } else if (style.width) {
+        // If only width is set, maintain aspect ratio
+        const widthScale = parseFloat(style.width) / canvasElement.width;
+        rectHeight = canvasElement.height * widthScale;
+      }
+      
+      // Apply scale transform and add borders/padding
+      const totalBorderPaddingWidth = (borderLeft + borderRight + paddingLeft + paddingRight) * scaleX;
+      const totalBorderPaddingHeight = (borderTop + borderBottom + paddingTop + paddingBottom) * scaleY;
+      
+      const finalWidth = rectWidth * scaleX + totalBorderPaddingWidth;
+      const finalHeight = rectHeight * scaleY + totalBorderPaddingHeight;
+      
+      return {
+        left: 0,
+        top: 0,
+        right: finalWidth,
+        bottom: finalHeight,
+        width: finalWidth,
+        height: finalHeight,
+        x: 0,
+        y: 0
+      };
+    });
+  }
+  
+  // Mock the initial canvas
+  setupCanvasMock(canvas);
+  
+  // Override document.createElement to auto-mock new canvas elements
+  const originalCreateElement = document.createElement;
+  document.createElement = jest.fn((tagName) => {
+    const element = originalCreateElement.call(document, tagName);
+    if (tagName.toLowerCase() === 'canvas') {
+      setupCanvasMock(element);
+    }
+    return element;
+  });
+  
+  // Mock getComputedStyle globally for all canvas elements
+  window.getComputedStyle = jest.fn((element) => {
+    if (element && element.tagName && element.tagName.toLowerCase() === 'canvas') {
+      // Helper to parse style values including border shorthand
+      const getBorderWidth = (side) => {
+        const sideMap = {
+          'border-left-width': 'borderLeftWidth',
+          'border-right-width': 'borderRightWidth', 
+          'border-top-width': 'borderTopWidth',
+          'border-bottom-width': 'borderBottomWidth'
+        };
+        
+        const styleProp = sideMap[side];
+        if (element.style[styleProp]) {
+          return element.style[styleProp];
+        }
+        
+        if (element.style.border) {
+          const match = element.style.border.match(/(\d+)px/);
+          return match ? match[1] + 'px' : '0px';
+        }
+        
+        return '0px';
+      };
+      
+      // Helper to parse padding values including padding shorthand
+      const getPaddingWidth = (side) => {
+        const sideMap = {
+          'padding-left': 'paddingLeft',
+          'padding-right': 'paddingRight',
+          'padding-top': 'paddingTop', 
+          'padding-bottom': 'paddingBottom'
+        };
+        
+        const styleProp = sideMap[side];
+        if (element.style[styleProp]) {
+          return element.style[styleProp];
+        }
+        
+        if (element.style.padding) {
+          const match = element.style.padding.match(/(\d+)px/);
+          return match ? match[1] + 'px' : '0px';
+        }
+        
+        return '0px';
+      };
+      
+      return {
+        transform: convertTransformToMatrix(element.style.transform),
+        width: element.style.width || element.width + 'px',
+        height: element.style.height || element.height + 'px',
+        getPropertyValue: function(prop) {
+          const propMap = {
+            'border-left-width': getBorderWidth('border-left-width'),
+            'border-right-width': getBorderWidth('border-right-width'),
+            'border-top-width': getBorderWidth('border-top-width'),
+            'border-bottom-width': getBorderWidth('border-bottom-width'),
+            'padding-left': getPaddingWidth('padding-left'),
+            'padding-right': getPaddingWidth('padding-right'),
+            'padding-top': getPaddingWidth('padding-top'),
+            'padding-bottom': getPaddingWidth('padding-bottom'),
+            'transform': this.transform,
+            'width': this.width,
+            'height': this.height
+          };
+          return propMap[prop] || '0px';
+        }
+      };
+    }
+    // Fall back to original implementation for non-canvas elements
+    return originalGetComputedStyle ? originalGetComputedStyle.call(this, element) : {};
+  });
+}
+
 // --------------------------------------------------
 // pointer
 // --------------------------------------------------
@@ -18,17 +252,20 @@ describe('pointer', () => {
     canvas.style.position = 'fixed';
     canvas.style.top = 0;
     canvas.style.left = 0;
+    
+    // Mock getBoundingClientRect for jsdom
+    mockCanvasRect(canvas);
 
     pointer.initPointer();
 
-    simulateEvent('blur', {}, canvas);
+    simulatePointerEvent('blur', {}, canvas);
 
     object = {
       x: 100,
       y: 50,
       width: 10,
       height: 20,
-      render: sinon.spy()
+      render: jest.fn()
     };
   });
 
@@ -37,20 +274,20 @@ describe('pointer', () => {
   });
 
   it('should export api', () => {
-    expect(pointer.pointerMap).to.deep.equal({
+    expect(pointer.pointerMap).toEqual({
       0: 'left',
       1: 'middle',
       2: 'right'
     });
 
-    expect(pointer.getPointer).to.be.an('function');
-    expect(pointer.initPointer).to.be.an('function');
-    expect(pointer.track).to.be.an('function');
-    expect(pointer.untrack).to.be.an('function');
-    expect(pointer.pointerOver).to.be.an('function');
-    expect(pointer.onPointer).to.be.an('function');
-    expect(pointer.offPointer).to.be.an('function');
-    expect(pointer.pointerPressed).to.be.an('function');
+    expect(pointer.getPointer).toEqual(expect.any(Function));
+    expect(pointer.initPointer).toEqual(expect.any(Function));
+    expect(pointer.track).toEqual(expect.any(Function));
+    expect(pointer.untrack).toEqual(expect.any(Function));
+    expect(pointer.pointerOver).toEqual(expect.any(Function));
+    expect(pointer.onPointer).toEqual(expect.any(Function));
+    expect(pointer.offPointer).toEqual(expect.any(Function));
+    expect(pointer.pointerPressed).toEqual(expect.any(Function));
   });
 
   // --------------------------------------------------
@@ -58,19 +295,21 @@ describe('pointer', () => {
   // --------------------------------------------------
   describe('initPointer', () => {
     it('should add event listeners', () => {
-      let spy = sinon.spy(getCanvas(), 'addEventListener');
+      const spy = jest.spyOn(getCanvas(), 'addEventListener');
 
       pointer.initPointer();
 
-      expect(spy.called).to.equal(true);
+      expect(spy).toHaveBeenCalled();
+      
+      spy.mockRestore();
     });
 
     it('should return the pointer object', () => {
-      let pntr = pointer.initPointer();
+      const pntr = pointer.initPointer();
 
-      expect(pntr.x).to.exist;
-      expect(pntr.y).to.exist;
-      expect(pntr.radius).to.exist;
+      expect(pntr.x).toBeDefined();
+      expect(pntr.y).toBeDefined();
+      expect(pntr.radius).toBeDefined();
     });
 
     it('should allow multiple canvases', () => {
@@ -79,8 +318,8 @@ describe('pointer', () => {
       let canvas = document.createElement('canvas');
       let otherPntr = pointer.initPointer({ canvas });
 
-      expect(pntr).to.not.equal(otherPntr);
-      expect(otherPntr.canvas).to.equal(canvas);
+      expect(pntr).not.toBe(otherPntr);
+      expect(otherPntr.canvas).toBe(canvas);
     });
 
     it('should update radius', () => {
@@ -88,8 +327,8 @@ describe('pointer', () => {
       let canvas = document.createElement('canvas');
       let otherPntr = pointer.initPointer({ canvas, radius: 10 });
 
-      expect(pntr.radius).to.not.equal(otherPntr.radius);
-      expect(otherPntr.radius).to.equal(10);
+      expect(pntr.radius).not.toBe(otherPntr.radius);
+      expect(otherPntr.radius).toBe(10);
     });
   });
 
@@ -98,26 +337,26 @@ describe('pointer', () => {
   // --------------------------------------------------
   describe('pointerPressed', () => {
     it('should return false when a button is not pressed', () => {
-      expect(pointer.pointerPressed('left')).to.be.false;
-      expect(pointer.pointerPressed('middle')).to.be.false;
-      expect(pointer.pointerPressed('right')).to.be.false;
+      expect(pointer.pointerPressed('left')).toBe(false);
+      expect(pointer.pointerPressed('middle')).toBe(false);
+      expect(pointer.pointerPressed('right')).toBe(false);
     });
 
     it('should return true for a button', () => {
-      simulateEvent('mousedown', { button: 1 }, canvas);
+      simulatePointerEvent('mousedown', { button: 1 }, canvas);
 
-      expect(pointer.pointerPressed('middle')).to.be.true;
+      expect(pointer.pointerPressed('middle')).toBe(true);
     });
 
     it('should return false if the button is no longer pressed', () => {
-      simulateEvent('mousedown', { button: 2 }, canvas);
-      simulateEvent('mouseup', { button: 2 }, canvas);
+      simulatePointerEvent('mousedown', { button: 2 }, canvas);
+      simulatePointerEvent('mouseup', { button: 2 }, canvas);
 
-      expect(pointer.pointerPressed('right')).to.be.false;
+      expect(pointer.pointerPressed('right')).toBe(false);
     });
 
     it('should return true for touchstart', () => {
-      simulateEvent(
+      simulatePointerEvent(
         'touchstart',
         {
           touches: [{ identifier: 0, clientX: 100, clientY: 50 }],
@@ -128,11 +367,11 @@ describe('pointer', () => {
         canvas
       );
 
-      expect(pointer.pointerPressed('left')).to.be.true;
+      expect(pointer.pointerPressed('left')).toBe(true);
     });
 
     it('should return false for a touchend', () => {
-      simulateEvent(
+      simulatePointerEvent(
         'touchstart',
         {
           touches: [{ identifier: 0, clientX: 100, clientY: 50 }],
@@ -142,7 +381,7 @@ describe('pointer', () => {
         },
         canvas
       );
-      simulateEvent(
+      simulatePointerEvent(
         'touchend',
         {
           touches: [{ identifier: 0, clientX: 100, clientY: 50 }],
@@ -153,7 +392,7 @@ describe('pointer', () => {
         canvas
       );
 
-      expect(pointer.pointerPressed('left')).to.be.false;
+      expect(pointer.pointerPressed('left')).toBe(false);
     });
   });
 
@@ -165,8 +404,8 @@ describe('pointer', () => {
       let obj = { render: noop };
       pointer.track(obj);
 
-      expect(obj.render).to.not.equal(noop);
-      expect(obj.__r).to.exist;
+      expect(obj.render).not.toBe(noop);
+      expect(obj.__r).toBeDefined();
     });
 
     it('should take multiple objects', () => {
@@ -174,10 +413,10 @@ describe('pointer', () => {
       let obj2 = { render: noop };
       pointer.track(obj, obj2);
 
-      expect(obj.render).to.not.equal(noop);
-      expect(obj.__r).to.exist;
-      expect(obj2.render).to.not.equal(noop);
-      expect(obj2.__r).to.exist;
+      expect(obj.render).not.toBe(noop);
+      expect(obj.__r).toBeDefined();
+      expect(obj2.render).not.toBe(noop);
+      expect(obj2.__r).toBeDefined();
     });
 
     it('should take an array of objects', () => {
@@ -185,19 +424,19 @@ describe('pointer', () => {
       let obj2 = { render: noop };
       pointer.track([obj, obj2]);
 
-      expect(obj.render).to.not.equal(noop);
-      expect(obj.__r).to.exist;
-      expect(obj2.render).to.not.equal(noop);
-      expect(obj2.__r).to.exist;
+      expect(obj.render).not.toBe(noop);
+      expect(obj.__r).toBeDefined();
+      expect(obj2.render).not.toBe(noop);
+      expect(obj2.__r).toBeDefined();
     });
 
     it('should call the objects original render function', () => {
-      let render = sinon.spy();
+      let render = jest.fn();
       let obj = { render };
       pointer.track(obj);
       obj.render();
 
-      expect(render.called).to.be.true;
+      expect(render).toHaveBeenCalled();
     });
 
     it('should do nothing if the object is already tracked', () => {
@@ -212,8 +451,8 @@ describe('pointer', () => {
         pointer.track(obj);
       }
 
-      expect(func).to.not.throw();
-      expect(render).to.equal(obj.__r);
+      expect(func).not.toThrow();
+      expect(render).toBe(obj.__r);
     });
 
     it('should track objects separately for each canvas', () => {
@@ -228,10 +467,10 @@ describe('pointer', () => {
       let pntr1 = pointer.getPointer();
       let pntr2 = pointer.getPointer(canvas);
 
-      expect(pntr1._o.includes(obj1)).to.be.true;
-      expect(pntr1._o.includes(obj2)).to.be.false;
-      expect(pntr2._o.includes(obj1)).to.be.false;
-      expect(pntr2._o.includes(obj2)).to.be.true;
+      expect(pntr1._o.includes(obj1)).toBe(true);
+      expect(pntr1._o.includes(obj2)).toBe(false);
+      expect(pntr2._o.includes(obj1)).toBe(false);
+      expect(pntr2._o.includes(obj2)).toBe(true);
     });
 
     it('should throw error if pointer events are not setup', () => {
@@ -240,7 +479,7 @@ describe('pointer', () => {
         pointer.track({ context: { canvas } });
       }
 
-      expect(func).to.throw();
+      expect(func).toThrow();
     });
   });
 
@@ -253,8 +492,8 @@ describe('pointer', () => {
       pointer.track(obj);
       pointer.untrack(obj);
 
-      expect(obj.render).to.equal(noop);
-      expect(obj.__r).to.not.be.true;
+      expect(obj.render).toBe(noop);
+      expect(obj.__r).not.toBe(true);
     });
 
     it('should take multiple objects', () => {
@@ -263,10 +502,10 @@ describe('pointer', () => {
       pointer.track(obj, obj2);
       pointer.untrack(obj, obj2);
 
-      expect(obj.render).to.equal(noop);
-      expect(obj.__r).to.not.be.true;
-      expect(obj2.render).to.equal(noop);
-      expect(obj2.__r).to.not.be.true;
+      expect(obj.render).toBe(noop);
+      expect(obj.__r).not.toBe(true);
+      expect(obj2.render).toBe(noop);
+      expect(obj2.__r).not.toBe(true);
     });
 
     it('should take an array objects', () => {
@@ -275,10 +514,10 @@ describe('pointer', () => {
       pointer.track(obj, obj2);
       pointer.untrack([obj, obj2]);
 
-      expect(obj.render).to.equal(noop);
-      expect(obj.__r).to.not.be.true;
-      expect(obj2.render).to.equal(noop);
-      expect(obj2.__r).to.not.be.true;
+      expect(obj.render).toBe(noop);
+      expect(obj.__r).not.toBe(true);
+      expect(obj2.render).toBe(noop);
+      expect(obj2.__r).not.toBe(true);
     });
 
     it('should do nothing if the object was never tracked', () => {
@@ -286,7 +525,7 @@ describe('pointer', () => {
         pointer.untrack({ foo: 1 });
       }
 
-      expect(func).to.not.throw();
+      expect(func).not.toThrow();
     });
 
     it('should untrack objects separately for each canvas', () => {
@@ -302,10 +541,10 @@ describe('pointer', () => {
       let pntr1 = pointer.getPointer();
       let pntr2 = pointer.getPointer(canvas);
 
-      expect(pntr1._o.includes(obj1)).to.be.false;
-      expect(pntr1._o.includes(obj2)).to.be.false;
-      expect(pntr2._o.includes(obj1)).to.be.false;
-      expect(pntr2._o.includes(obj2)).to.be.false;
+      expect(pntr1._o.includes(obj1)).toBe(false);
+      expect(pntr1._o.includes(obj2)).toBe(false);
+      expect(pntr2._o.includes(obj1)).toBe(false);
+      expect(pntr2._o.includes(obj2)).toBe(false);
     });
 
     it('should throw error if pointer events are not setup', () => {
@@ -314,7 +553,7 @@ describe('pointer', () => {
         pointer.untrack({ context: { canvas } });
       }
 
-      expect(func).to.throw();
+      expect(func).toThrow();
     });
   });
 
@@ -332,21 +571,21 @@ describe('pointer', () => {
     // --------------------------------------------------
     describe('pointerOver', () => {
       it('should return false is object is not being tracked', () => {
-        expect(pointer.pointerOver({})).to.equal(false);
+        expect(pointer.pointerOver({})).toBe(false);
       });
 
       it('should return false if the pointer is not over the object', () => {
         pntr.x = 50;
         pntr.y = 55;
 
-        expect(pointer.pointerOver(object)).to.equal(false);
+        expect(pointer.pointerOver(object)).toBe(false);
       });
 
       it('should return true if the pointer is over the object', () => {
         pntr.x = 105;
         pntr.y = 55;
 
-        expect(pointer.pointerOver(object)).to.equal(true);
+        expect(pointer.pointerOver(object)).toBe(true);
       });
 
       it('should handle objects from different canvas', () => {
@@ -368,7 +607,7 @@ describe('pointer', () => {
         pntr2.x = 105;
         pntr2.y = 55;
 
-        expect(pointer.pointerOver(obj)).to.equal(true);
+        expect(pointer.pointerOver(obj)).toBe(true);
       });
 
       it('should throw error if pointer events are not setup', () => {
@@ -377,7 +616,7 @@ describe('pointer', () => {
           pointer.pointerOver({ context: { canvas } });
         }
 
-        expect(func).to.throw();
+        expect(func).toThrow();
       });
     });
 
@@ -391,7 +630,7 @@ describe('pointer', () => {
           y: 50,
           width: 10,
           height: 20,
-          render: sinon.spy()
+          render: jest.fn()
         };
         pointer.track(obj);
         emit('tick');
@@ -403,12 +642,12 @@ describe('pointer', () => {
         pntr.x = 100;
         pntr.y = 50;
 
-        expect(pointer.pointerOver(object)).to.equal(true);
+        expect(pointer.pointerOver(object)).toBe(true);
 
         pntr.x = 108;
 
         // object rendered first so obj is on top
-        expect(pointer.pointerOver(obj)).to.equal(true);
+        expect(pointer.pointerOver(obj)).toBe(true);
       });
 
       it('should take into account object anchor', () => {
@@ -420,7 +659,7 @@ describe('pointer', () => {
         pntr.x = 95;
         pntr.y = 55;
 
-        expect(pointer.pointerOver(object)).to.equal(true);
+        expect(pointer.pointerOver(object)).toBe(true);
       });
 
       it('should take into account object camera', () => {
@@ -430,7 +669,7 @@ describe('pointer', () => {
         pntr.x = 95;
         pntr.y = 55;
 
-        expect(pointer.pointerOver(object)).to.equal(true);
+        expect(pointer.pointerOver(object)).toBe(true);
       });
 
       it('should take into account parent object camera', () => {
@@ -443,7 +682,7 @@ describe('pointer', () => {
         pntr.x = 95;
         pntr.y = 55;
 
-        expect(pointer.pointerOver(object)).to.equal(true);
+        expect(pointer.pointerOver(object)).toBe(true);
       });
 
       it('should take into account all parent object camera', () => {
@@ -461,14 +700,14 @@ describe('pointer', () => {
         pntr.x = 90;
         pntr.y = 50;
 
-        expect(pointer.pointerOver(object)).to.equal(true);
+        expect(pointer.pointerOver(object)).toBe(true);
       });
 
       it('should call the objects collidesWithPointer function', () => {
-        object.collidesWithPointer = sinon.spy();
+        object.collidesWithPointer = jest.fn();
         pointer.pointerOver(object);
 
-        expect(object.collidesWithPointer.called).to.be.true;
+        expect(object.collidesWithPointer).toHaveBeenCalled();
       });
     });
 
@@ -478,14 +717,14 @@ describe('pointer', () => {
     describe('mousemove', () => {
       it('should update the x and y pointer coordinates', () => {
         pntr.x = pntr.y = 0;
-        simulateEvent(
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 100, clientY: 50 },
           canvas
         );
 
-        expect(pntr.x).to.equal(100);
-        expect(pntr.y).to.equal(50);
+        expect(pntr.x).toBe(100);
+        expect(pntr.y).toBe(50);
       });
 
       it('should take into account padding and border style', () => {
@@ -496,14 +735,14 @@ describe('pointer', () => {
         canvas.style.padding = '32px';
         pntr = pointer.initPointer({ canvas });
 
-        simulateEvent(
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 100, clientY: 50 },
           canvas
         );
 
-        expect(pntr.x).to.equal(36);
-        expect(pntr.y).to.equal(-14);
+        expect(pntr.x).toBe(36);
+        expect(pntr.y).toBe(-14);
       });
 
       it('should take into account transform: scale style', () => {
@@ -514,14 +753,14 @@ describe('pointer', () => {
         canvas.style.transformOrigin = 'top left';
         pntr = pointer.initPointer({ canvas });
 
-        simulateEvent(
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 50, clientY: 25 },
           canvas
         );
 
-        expect(pntr.x).to.equal(100);
-        expect(pntr.y).to.equal(50);
+        expect(pntr.x).toBe(100);
+        expect(pntr.y).toBe(50);
       });
 
       it('should take into account width style', () => {
@@ -531,14 +770,14 @@ describe('pointer', () => {
         canvas.style.width = canvas.width * 2 + 'px';
         pntr = pointer.initPointer({ canvas });
 
-        simulateEvent(
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 100, clientY: 50 },
           canvas
         );
 
-        expect(pntr.x).to.equal(50);
-        expect(pntr.y).to.equal(25);
+        expect(pntr.x).toBe(50);
+        expect(pntr.y).toBe(25);
       });
 
       it('should take into account all style properties', () => {
@@ -552,41 +791,41 @@ describe('pointer', () => {
         canvas.style.width = canvas.width * 2 + 'px';
         pntr = pointer.initPointer({ canvas });
 
-        simulateEvent(
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 100, clientY: 50 },
           canvas
         );
 
-        expect(pntr.x).to.equal(68);
-        expect(pntr.y).to.equal(18);
+        expect(pntr.x).toBe(68);
+        expect(pntr.y).toBe(18);
       });
 
       it('should call the objects onOver function if it is the target', () => {
-        object.onOver = sinon.spy();
-        simulateEvent(
+        object.onOver = jest.fn();
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 105, clientY: 55 },
           canvas
         );
 
-        expect(object.onOver.called).to.be.true;
+        expect(object.onOver).toHaveBeenCalled();
       });
 
       it('should call the objects onOut function if it is no longer the target', () => {
-        object.onOut = sinon.spy();
-        simulateEvent(
+        object.onOut = jest.fn();
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 105, clientY: 55 },
           canvas
         );
-        simulateEvent(
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 150, clientY: 55 },
           canvas
         );
 
-        expect(object.onOut.called).to.be.true;
+        expect(object.onOut).toHaveBeenCalled();
       });
 
       it('should call the objects onOut function if another object is the target', () => {
@@ -595,27 +834,27 @@ describe('pointer', () => {
           y: 50,
           width: 10,
           height: 20,
-          render: sinon.spy()
+          render: jest.fn()
         };
         pointer.track(obj);
         object.render();
         obj.render();
         emit('tick');
 
-        object.onOut = sinon.spy();
-        simulateEvent(
+        object.onOut = jest.fn();
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 105, clientY: 55 },
           canvas
         );
-        simulateEvent(
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 155, clientY: 55 },
           canvas
         );
 
-        expect(pointer.pointerOver(obj)).to.be.true;
-        expect(object.onOut.called).to.be.true;
+        expect(pointer.pointerOver(obj)).toBe(true);
+        expect(object.onOut).toHaveBeenCalled();
       });
 
       it('should take into account object anchor', () => {
@@ -623,22 +862,22 @@ describe('pointer', () => {
           x: 0.5,
           y: 0.5
         };
-        object.onOver = sinon.spy();
-        simulateEvent(
+        object.onOver = jest.fn();
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 110, clientY: 55 },
           canvas
         );
 
-        expect(object.onOver.called).to.not.be.true;
+        expect(object.onOver).not.toHaveBeenCalled();
 
-        simulateEvent(
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 95, clientY: 55 },
           canvas
         );
 
-        expect(object.onOver.called).to.be.true;
+        expect(object.onOver).toHaveBeenCalled();
       });
 
       it('should handle objects from different canvas', () => {
@@ -657,7 +896,7 @@ describe('pointer', () => {
           width: 10,
           height: 20,
           render: noop,
-          onOver: sinon.spy(),
+          onOver: jest.fn(),
           context: { canvas: otherCanvas }
         };
         pointer.track(obj);
@@ -665,19 +904,19 @@ describe('pointer', () => {
         emit('tick');
 
         // wrong canvas
-        simulateEvent(
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 105, clientY: 55 },
           canvas
         );
-        expect(obj.onOver.called).to.false;
+        expect(obj.onOver).not.toHaveBeenCalled();
 
-        simulateEvent(
+        simulatePointerEvent(
           'mousemove',
           { identifier: 0, clientX: 105, clientY: 55 },
           otherCanvas
         );
-        expect(obj.onOver.called).to.be.true;
+        expect(obj.onOver).toHaveBeenCalled();
       });
     });
 
@@ -702,10 +941,10 @@ describe('pointer', () => {
             pntr.x = pntr.y = 0;
             event.clientX = 100;
             event.clientY = 50;
-            simulateEvent(eventName, config, canvas);
+            simulatePointerEvent(eventName, config, canvas);
 
-            expect(pntr.x).to.equal(100);
-            expect(pntr.y).to.equal(50);
+            expect(pntr.x).toBe(100);
+            expect(pntr.y).toBe(50);
           });
 
           it('should take into account padding and border style', () => {
@@ -718,10 +957,10 @@ describe('pointer', () => {
 
             event.clientX = 100;
             event.clientY = 50;
-            simulateEvent(eventName, config, canvas);
+            simulatePointerEvent(eventName, config, canvas);
 
-            expect(pntr.x).to.equal(36);
-            expect(pntr.y).to.equal(-14);
+            expect(pntr.x).toBe(36);
+            expect(pntr.y).toBe(-14);
           });
 
           it('should take into account transform: scale style', () => {
@@ -734,10 +973,10 @@ describe('pointer', () => {
 
             event.clientX = 50;
             event.clientY = 25;
-            simulateEvent(eventName, config, canvas);
+            simulatePointerEvent(eventName, config, canvas);
 
-            expect(pntr.x).to.equal(100);
-            expect(pntr.y).to.equal(50);
+            expect(pntr.x).toBe(100);
+            expect(pntr.y).toBe(50);
           });
 
           it('should take into account width style', () => {
@@ -749,10 +988,10 @@ describe('pointer', () => {
 
             event.clientX = 100;
             event.clientY = 50;
-            simulateEvent(eventName, config, canvas);
+            simulatePointerEvent(eventName, config, canvas);
 
-            expect(pntr.x).to.equal(50);
-            expect(pntr.y).to.equal(25);
+            expect(pntr.x).toBe(50);
+            expect(pntr.y).toBe(25);
           });
 
           it('should take into account all style properties', () => {
@@ -768,40 +1007,40 @@ describe('pointer', () => {
 
             event.clientX = 100;
             event.clientY = 50;
-            simulateEvent(eventName, config, canvas);
+            simulatePointerEvent(eventName, config, canvas);
 
-            expect(pntr.x).to.equal(68);
-            expect(pntr.y).to.equal(18);
+            expect(pntr.x).toBe(68);
+            expect(pntr.y).toBe(18);
           });
 
           it(`should call the ${pointerHandler} function`, () => {
-            let spy = sinon.spy();
+            let spy = jest.fn();
             pointer.onPointer(pointerHandler, spy);
             event.clientX = 100;
             event.clientY = 50;
-            simulateEvent(eventName, config, canvas);
+            simulatePointerEvent(eventName, config, canvas);
 
-            expect(spy.called).to.be.true;
+            expect(spy).toHaveBeenCalled();
           });
 
           it(`should unregister the ${pointerHandler} function`, () => {
-            let spy = sinon.spy();
+            let spy = jest.fn();
             pointer.onPointer(pointerHandler, spy);
             pointer.offPointer(pointerHandler);
             event.clientX = 100;
             event.clientY = 50;
-            simulateEvent(eventName, config, canvas);
+            simulatePointerEvent(eventName, config, canvas);
 
-            expect(spy.called).to.be.false;
+            expect(spy).not.toHaveBeenCalled();
           });
 
           it(`should call the objects ${eventHandler} function if it is the target`, () => {
-            object[eventHandler] = sinon.spy();
+            object[eventHandler] = jest.fn();
             event.clientX = 105;
             event.clientY = 55;
-            simulateEvent(eventName, config, canvas);
+            simulatePointerEvent(eventName, config, canvas);
 
-            expect(object[eventHandler].called).to.be.true;
+            expect(object[eventHandler]).toHaveBeenCalled();
           });
 
           it('should take into account object anchor', () => {
@@ -809,18 +1048,18 @@ describe('pointer', () => {
               x: 0.5,
               y: 0.5
             };
-            object[eventHandler] = sinon.spy();
+            object[eventHandler] = jest.fn();
             event.clientX = 110;
             event.clientY = 55;
-            simulateEvent(eventName, config, canvas);
+            simulatePointerEvent(eventName, config, canvas);
 
-            expect(object[eventHandler].called).to.not.be.true;
+            expect(object[eventHandler]).not.toHaveBeenCalled();
 
             event.clientX = 95;
             event.clientY = 55;
-            simulateEvent(eventName, config, canvas);
+            simulatePointerEvent(eventName, config, canvas);
 
-            expect(object[eventHandler].called).to.be.true;
+            expect(object[eventHandler]).toHaveBeenCalled();
           });
 
           it('should handle objects from different canvas', () => {
@@ -839,7 +1078,7 @@ describe('pointer', () => {
               width: 10,
               height: 20,
               render: noop,
-              [eventHandler]: sinon.spy(),
+              [eventHandler]: jest.fn(),
               context: { canvas: otherCanvas }
             };
             pointer.track(obj);
@@ -849,11 +1088,11 @@ describe('pointer', () => {
             // wrong canvas
             event.clientX = 105;
             event.clientY = 55;
-            simulateEvent(eventName, config, canvas);
-            expect(obj[eventHandler].called).to.false;
+            simulatePointerEvent(eventName, config, canvas);
+            expect(obj[eventHandler]).not.toHaveBeenCalled();
 
-            simulateEvent(eventName, config, otherCanvas);
-            expect(obj[eventHandler].called).to.be.true;
+            simulatePointerEvent(eventName, config, otherCanvas);
+            expect(obj[eventHandler]).toHaveBeenCalled();
           });
 
           if (eventName === 'touchstart') {
@@ -861,10 +1100,10 @@ describe('pointer', () => {
               pntr.x = pntr.y = 0;
               event.clientX = 100;
               event.clientY = 50;
-              simulateEvent(eventName, config, canvas);
+              simulatePointerEvent(eventName, config, canvas);
 
-              expect(pntr.touches.length).to.equal(1);
-              expect(pntr.touches[0]).to.deep.equal({
+              expect(pntr.touches.length).toBe(1);
+              expect(pntr.touches[0]).toEqual({
                 start: {
                   x: 100,
                   y: 50
@@ -879,7 +1118,7 @@ describe('pointer', () => {
               pntr.x = pntr.y = 0;
               event.clientX = 100;
               event.clientY = 50;
-              simulateEvent(eventName, config, canvas);
+              simulatePointerEvent(eventName, config, canvas);
 
               let touch = {
                 identifier: 1,
@@ -888,7 +1127,7 @@ describe('pointer', () => {
               };
               event.clientX = 30;
               event.clientY = 40;
-              simulateEvent(
+              simulatePointerEvent(
                 eventName,
                 {
                   // don't modify the original config
@@ -899,8 +1138,8 @@ describe('pointer', () => {
                 canvas
               );
 
-              expect(pntr.touches.length).to.equal(2);
-              expect(pntr.touches[0]).to.deep.equal({
+              expect(pntr.touches.length).toBe(2);
+              expect(pntr.touches[0]).toEqual({
                 start: {
                   x: 100,
                   y: 50
@@ -909,7 +1148,7 @@ describe('pointer', () => {
                 y: 40,
                 changed: true
               });
-              expect(pntr.touches[1]).to.deep.equal({
+              expect(pntr.touches[1]).toEqual({
                 start: {
                   x: 10,
                   y: 20
@@ -921,19 +1160,17 @@ describe('pointer', () => {
             });
 
             it('should emit touchChanged', () => {
-              let spy = sinon.spy();
+              let spy = jest.fn();
               on('touchChanged', spy);
-              simulateEvent(eventName, config, canvas);
-              expect(
-                spy.calledWith(
-                  sinon.match.instanceOf(Event),
-                  pntr.touches
-                )
-              ).to.be.true;
+              simulatePointerEvent(eventName, config, canvas);
+              expect(spy).toHaveBeenCalledWith(
+                expect.any(Event),
+                pntr.touches
+              );
             });
 
             it('should emit touchChanged for each changed touch', () => {
-              let spy = sinon.spy();
+              let spy = jest.fn();
               on('touchChanged', spy);
 
               let touch = {
@@ -941,7 +1178,7 @@ describe('pointer', () => {
                 clientX: 10,
                 clientY: 20
               };
-              simulateEvent(
+              simulatePointerEvent(
                 eventName,
                 {
                   ...config,
@@ -951,19 +1188,19 @@ describe('pointer', () => {
                 canvas
               );
 
-              expect(spy.calledTwice).to.be.true;
+              expect(spy).toHaveBeenCalledTimes(2);
             });
           }
 
           if (eventName === 'touchend') {
             it('should remove the touch', () => {
-              simulateEvent('touchstart', config, canvas);
-              expect(pntr.touches.length).to.equal(1);
-              expect(pntr.touches[0]).to.exist;
+              simulatePointerEvent('touchstart', config, canvas);
+              expect(pntr.touches.length).toBe(1);
+              expect(pntr.touches[0]).toBeDefined();
 
-              simulateEvent(eventName, config, canvas);
-              expect(pntr.touches.length).to.equal(0);
-              expect(pntr.touches[0]).to.not.exist;
+              simulatePointerEvent(eventName, config, canvas);
+              expect(pntr.touches.length).toBe(0);
+              expect(pntr.touches[0]).toBeUndefined();
             });
 
             it('should remove each changed touch', () => {
@@ -972,7 +1209,7 @@ describe('pointer', () => {
                 clientX: 10,
                 clientY: 20
               };
-              simulateEvent(
+              simulatePointerEvent(
                 'touchstart',
                 {
                   ...config,
@@ -981,14 +1218,14 @@ describe('pointer', () => {
                 },
                 canvas
               );
-              expect(pntr.touches.length).to.equal(2);
+              expect(pntr.touches.length).toBe(2);
 
-              simulateEvent(eventName, config, canvas);
-              expect(pntr.touches.length).to.equal(1);
-              expect(pntr.touches[0]).to.not.exist;
-              expect(pntr.touches[1]).to.exist;
+              simulatePointerEvent(eventName, config, canvas);
+              expect(pntr.touches.length).toBe(1);
+              expect(pntr.touches[0]).toBeUndefined();
+              expect(pntr.touches[1]).toBeDefined();
 
-              simulateEvent(
+              simulatePointerEvent(
                 eventName,
                 {
                   ...config,
@@ -997,11 +1234,11 @@ describe('pointer', () => {
                 },
                 canvas
               );
-              expect(pntr.touches.length).to.equal(0);
+              expect(pntr.touches.length).toBe(0);
             });
 
             it('should emit touchEnd when all touches are removed', () => {
-              let spy = sinon.spy();
+              let spy = jest.fn();
               on('touchEnd', spy);
 
               let touch = {
@@ -1009,7 +1246,7 @@ describe('pointer', () => {
                 clientX: 10,
                 clientY: 20
               };
-              simulateEvent(
+              simulatePointerEvent(
                 'touchstart',
                 {
                   ...config,
@@ -1019,10 +1256,10 @@ describe('pointer', () => {
                 canvas
               );
 
-              simulateEvent(eventName, config, canvas);
-              expect(spy.called).to.be.false;
+              simulatePointerEvent(eventName, config, canvas);
+              expect(spy).not.toHaveBeenCalled();
 
-              simulateEvent(
+              simulatePointerEvent(
                 eventName,
                 {
                   ...config,
@@ -1031,7 +1268,7 @@ describe('pointer', () => {
                 },
                 canvas
               );
-              expect(spy.called).to.be.true;
+              expect(spy).toHaveBeenCalled();
             });
           }
         });

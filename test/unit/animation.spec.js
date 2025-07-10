@@ -26,7 +26,7 @@ describe('animation', () => {
   });
 
   it('should export class', () => {
-    expect(AnimationClass).to.be.a('function');
+    expect(typeof AnimationClass).toBe('function');
   });
 
   // --------------------------------------------------
@@ -34,15 +34,15 @@ describe('animation', () => {
   // --------------------------------------------------
   describe('init', () => {
     it('should set properties on the animation', () => {
-      expect(animation.name).to.equal('walk');
-      expect(animation.frames).to.deep.equal([1, 2, 3, 4]);
-      expect(animation.frameRate).to.equal(30);
-      expect(animation.width).to.equal(5);
-      expect(animation.height).to.equal(5);
-      expect(animation.loop).to.equal(true);
-      expect(animation.margin).to.equal(0);
-      expect(animation.spacing).to.equal(0);
-      expect(animation.isStopped).to.equal(false);
+      expect(animation.name).toBe('walk');
+      expect(animation.frames).toEqual([1, 2, 3, 4]);
+      expect(animation.frameRate).toBe(30);
+      expect(animation.width).toBe(5);
+      expect(animation.height).toBe(5);
+      expect(animation.loop).toBe(true);
+      expect(animation.margin).toBe(0);
+      expect(animation.spacing).toBe(0);
+      expect(animation.isStopped).toBe(false);
     });
   });
 
@@ -53,8 +53,8 @@ describe('animation', () => {
     it('should return a new animation with the same properties', () => {
       let anim = animation.clone();
 
-      expect(anim).to.not.equal(animation);
-      expect(anim).to.deep.equal(animation);
+      expect(anim).not.toBe(animation);
+      expect(anim).toEqual(animation);
     });
   });
 
@@ -68,8 +68,8 @@ describe('animation', () => {
 
       animation.reset();
 
-      expect(animation._f).to.equal(0);
-      expect(animation._a).to.equal(0);
+      expect(animation._f).toBe(0);
+      expect(animation._a).toBe(0);
     });
   });
 
@@ -80,23 +80,23 @@ describe('animation', () => {
     it('should start the animation', () => {
       animation.start();
 
-      expect(animation.isStopped).to.equal(false);
+      expect(animation.isStopped).toBe(false);
     });
 
     it("should reset if the animation doesn't loop", () => {
       animation.loop = false;
-      sinon.spy(animation, 'reset');
+      const resetSpy = jest.spyOn(animation, 'reset');
       animation.start();
 
-      expect(animation.reset.called).to.be.true;
+      expect(resetSpy).toHaveBeenCalled();
     });
 
     it('should not reset if the animation loops', () => {
       animation.loop = true;
-      sinon.spy(animation, 'reset');
+      const resetSpy = jest.spyOn(animation, 'reset');
       animation.start();
 
-      expect(animation.reset.called).to.be.false;
+      expect(resetSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -108,7 +108,7 @@ describe('animation', () => {
       animation.start();
       animation.stop();
 
-      expect(animation.isStopped).to.equal(true);
+      expect(animation.isStopped).toBe(true);
     });
   });
 
@@ -119,7 +119,7 @@ describe('animation', () => {
     it('should not update the current frame if not enough time has passed', () => {
       animation.update();
 
-      expect(animation._f).to.equal(0);
+      expect(animation._f).toBe(0);
     });
 
     it('should take no parameter and update the current frame correctly', () => {
@@ -127,13 +127,13 @@ describe('animation', () => {
         animation.update();
       }
 
-      expect(animation._f).to.equal(1);
+      expect(animation._f).toBe(1);
     });
 
     it('should take dt as a parameter and update the current frame correctly', () => {
       animation.update(1 / 30);
 
-      expect(animation._f).to.equal(1);
+      expect(animation._f).toBe(1);
     });
 
     it('should restart the animation when finished', () => {
@@ -141,11 +141,11 @@ describe('animation', () => {
         animation.update();
       }
 
-      expect(animation._f).to.equal(3);
+      expect(animation._f).toBe(3);
 
       animation.update();
 
-      expect(animation._f).to.equal(0);
+      expect(animation._f).toBe(0);
     });
 
     it('should not restart the animation if loop is false', () => {
@@ -155,12 +155,12 @@ describe('animation', () => {
         animation.update();
       }
 
-      expect(animation._f).to.equal(3);
+      expect(animation._f).toBe(3);
 
       animation.update();
 
-      expect(animation._f).to.equal(3);
-      expect(animation.isStopped).to.be.true;
+      expect(animation._f).toBe(3);
+      expect(animation.isStopped).toBe(true);
     });
 
     it('should not update the animation if is stopped', () => {
@@ -170,7 +170,7 @@ describe('animation', () => {
         animation.update();
       }
 
-      expect(animation._f).to.equal(0);
+      expect(animation._f).toBe(0);
     });
   });
 
@@ -179,7 +179,7 @@ describe('animation', () => {
   // --------------------------------------------------
   describe('render', () => {
     it('should render the spriteSheet at its initial frame', () => {
-      let context = { drawImage: sinon.stub() };
+      let context = { drawImage: jest.fn() };
 
       animation.render({
         x: 10,
@@ -187,36 +187,34 @@ describe('animation', () => {
         context
       });
 
-      expect(context.drawImage.called).to.be.true;
-      expect(
-        context.drawImage.calledWith(
-          animation.spriteSheet.image,
-          5,
-          0,
-          5,
-          5,
-          10,
-          10,
-          5,
-          5
-        )
-      ).to.be.true;
+      expect(context.drawImage).toHaveBeenCalled();
+      expect(context.drawImage).toHaveBeenCalledWith(
+        animation.spriteSheet.image,
+        5,
+        0,
+        5,
+        5,
+        10,
+        10,
+        5,
+        5
+      );
     });
 
     it('should use the default context', () => {
       let context = getContext();
-      sinon.stub(context, 'drawImage');
+      jest.spyOn(context, 'drawImage');
 
       animation.render({
         x: 10,
         y: 10
       });
 
-      expect(context.drawImage.called).to.be.true;
+      expect(context.drawImage).toHaveBeenCalled();
     });
 
     it('should render the spriteSheet in the middle of the animation', () => {
-      let context = { drawImage: sinon.stub() };
+      let context = { drawImage: jest.fn() };
 
       animation._f = 2;
 
@@ -226,24 +224,22 @@ describe('animation', () => {
         context
       });
 
-      expect(context.drawImage.called).to.be.true;
-      expect(
-        context.drawImage.calledWith(
-          animation.spriteSheet.image,
-          5,
-          5,
-          5,
-          5,
-          10,
-          10,
-          5,
-          5
-        )
-      ).to.be.true;
+      expect(context.drawImage).toHaveBeenCalled();
+      expect(context.drawImage).toHaveBeenCalledWith(
+        animation.spriteSheet.image,
+        5,
+        5,
+        5,
+        5,
+        10,
+        10,
+        5,
+        5
+      );
     });
 
     it('should render the spriteSheet with spacing', () => {
-      let context = { drawImage: sinon.stub() };
+      let context = { drawImage: jest.fn() };
 
       animation._f = 2;
       animation.spacing = 1;
@@ -254,24 +250,22 @@ describe('animation', () => {
         context
       });
 
-      expect(context.drawImage.called).to.be.true;
-      expect(
-        context.drawImage.calledWith(
-          animation.spriteSheet.image,
-          8,
-          8,
-          5,
-          5,
-          10,
-          10,
-          5,
-          5
-        )
-      ).to.be.true;
+      expect(context.drawImage).toHaveBeenCalled();
+      expect(context.drawImage).toHaveBeenCalledWith(
+        animation.spriteSheet.image,
+        8,
+        8,
+        5,
+        5,
+        10,
+        10,
+        5,
+        5
+      );
     });
 
     it('should render the spriteSheet with margin', () => {
-      let context = { drawImage: sinon.stub() };
+      let context = { drawImage: jest.fn() };
 
       animation._f = 2;
       animation.margin = 5;
@@ -282,24 +276,22 @@ describe('animation', () => {
         context
       });
 
-      expect(context.drawImage.called).to.be.true;
-      expect(
-        context.drawImage.calledWith(
-          animation.spriteSheet.image,
-          10,
-          10,
-          5,
-          5,
-          10,
-          10,
-          5,
-          5
-        )
-      ).to.be.true;
+      expect(context.drawImage).toHaveBeenCalled();
+      expect(context.drawImage).toHaveBeenCalledWith(
+        animation.spriteSheet.image,
+        10,
+        10,
+        5,
+        5,
+        10,
+        10,
+        5,
+        5
+      );
     });
 
     it('should render the spriteSheet with spacing and margin', () => {
-      let context = { drawImage: sinon.stub() };
+      let context = { drawImage: jest.fn() };
 
       animation._f = 2;
       animation.spacing = 1;
@@ -311,20 +303,18 @@ describe('animation', () => {
         context
       });
 
-      expect(context.drawImage.called).to.be.true;
-      expect(
-        context.drawImage.calledWith(
-          animation.spriteSheet.image,
-          13,
-          13,
-          5,
-          5,
-          10,
-          10,
-          5,
-          5
-        )
-      ).to.be.true;
+      expect(context.drawImage).toHaveBeenCalled();
+      expect(context.drawImage).toHaveBeenCalledWith(
+        animation.spriteSheet.image,
+        13,
+        13,
+        5,
+        5,
+        10,
+        10,
+        5,
+        5
+      );
     });
   });
 });

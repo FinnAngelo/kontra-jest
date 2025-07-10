@@ -18,7 +18,7 @@ describe('utils', () => {
       const node = document.createElement('div');
       utils.addToDom(node, canvas);
 
-      expect(canvas.nextSibling).to.equal(node);
+      expect(canvas.nextSibling).toBe(node);
     });
 
     it('adds the node to the body if canvas is disconnected', () => {
@@ -26,7 +26,7 @@ describe('utils', () => {
       canvas.remove();
       utils.addToDom(node, canvas);
 
-      expect(node.parentNode).to.equal(document.body);
+      expect(node.parentNode).toBe(document.body);
     });
 
     it('adds the node to a container', () => {
@@ -36,14 +36,14 @@ describe('utils', () => {
       const node = document.createElement('div');
       utils.addToDom(node, canvas);
 
-      expect(div.contains(node)).to.be.true;
+      expect(div.contains(node)).toBe(true);
     });
 
     it('adds `data-kontra` attribute', () => {
       const node = document.createElement('div');
       utils.addToDom(node, canvas);
 
-      expect(node.hasAttribute('data-kontra')).to.be.true;
+      expect(node.hasAttribute('data-kontra')).toBe(true);
     });
 
     it('adds the node as the next sibling to the last `data-kontra` node', () => {
@@ -59,8 +59,8 @@ describe('utils', () => {
       const node2 = document.createElement('div');
       utils.addToDom(node2, canvas);
 
-      expect(node1.nextSibling).to.equal(node2);
-      expect(canvas.parentNode.lastChild).to.equal(div);
+      expect(node1.nextSibling).toBe(node2);
+      expect(canvas.parentNode.lastChild).toBe(div);
     });
 
     it('does not add the node as a child of an inner container with another `data-kontra` node', () => {
@@ -77,7 +77,7 @@ describe('utils', () => {
       const node2 = document.createElement('div');
       utils.addToDom(node2, canvas);
 
-      expect(canvas.nextSibling).to.equal(node2);
+      expect(canvas.nextSibling).toBe(node2);
     });
   });
 
@@ -89,22 +89,22 @@ describe('utils', () => {
       const array = [1, 2, 3, 4];
       utils.removeFromArray(array, 3);
 
-      expect(array).to.deep.equal([1, 2, 4]);
+      expect(array).toEqual([1, 2, 4]);
     });
 
     it('returns true when item is removed', () => {
       const array = [1, 2, 3, 4];
       const result = utils.removeFromArray(array, 3);
 
-      expect(result).to.be.true;
+      expect(result).toBe(true);
     });
 
     it('does not remove item if not found', () => {
       const array = [1, 2, 3, 4];
       const result = utils.removeFromArray(array, 5);
 
-      expect(array).to.deep.equal([1, 2, 3, 4]);
-      expect(result).to.be.undefined;
+      expect(array).toEqual([1, 2, 3, 4]);
+      expect(result).toBeUndefined();
     });
   });
 });

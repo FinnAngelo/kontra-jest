@@ -11,7 +11,8 @@ import { emit } from '../../src/events.js';
 import { init, getCanvas } from '../../src/core.js';
 
 describe('tileEngine integration', () => {
-  before(() => {
+
+  beforeAll(() => {
     if (!getCanvas()) {
       let canvas = document.createElement('canvas');
       canvas.width = canvas.height = 600;
@@ -20,74 +21,62 @@ describe('tileEngine integration', () => {
   });
 
   beforeEach(() => {
+    // Reset assets to clean state
     _reset();
   });
 
   afterEach(() => {
+    // Clean up after each test
     _reset();
   });
 
-  it('should resolve tileset image', done => {
-    loadImage('/imgs/bullet.png')
-      .then(image => {
-        let tileEngine = TileEngine({
-          tilesets: [
-            {
-              image: '/imgs/bullet.png'
-            }
-          ]
-        });
+  it('should resolve tileset image', async () => {
+    const image = await loadImage('/imgs/bullet.png');
+    
+    let tileEngine = TileEngine({
+      tilesets: [
+        {
+          image: '/imgs/bullet.png'
+        }
+      ]
+    });
 
-        expect(tileEngine.tilesets[0].image).to.equal(image);
-        done();
-      })
-      .catch(done);
-  });
+    expect(tileEngine.tilesets[0].image).toBe(image);
+  }, 10000);
 
-  it('should resolve tileset source', done => {
-    loadData('/data/test.json')
-      .then(() => {
-        let tileEngine = TileEngine({
-          tilesets: [
-            {
-              source: '/data/test.json'
-            }
-          ]
-        });
+  it('should resolve tileset source', async () => {
+    await loadData('/data/test.json');
+    
+    let tileEngine = TileEngine({
+      tilesets: [
+        {
+          source: '/data/test.json'
+        }
+      ]
+    });
 
-        expect(tileEngine.tilesets[0].foo).to.equal('bar');
-        done();
-      })
-      .catch(done);
-  });
+    expect(tileEngine.tilesets[0].foo).toBe('bar');
+  }, 10000);
 
-  it('should resolve tileset image from json data', done => {
-    // to make this property fail we need to return a nested path
-    load('/data/tileset/tileset.json', '/data/tileset/bullet.png')
-      .then(assets => {
-        let tileEngine = TileEngine(assets[0]);
-        expect(tileEngine.tilesets[0].image).to.equal(assets[1]);
-        done();
-      })
-      .catch(done);
-  });
+  it('should resolve tileset image from json data', async () => {
+    const assets = await load('/data/tileset/tileset.json', '/data/tileset/bullet.png');
+    let tileEngine = TileEngine(assets[0]);
+    expect(tileEngine.tilesets[0].image).toBe(assets[1]);
+  }, 10000);
 
-  it('should resolve tileset source and the image of the source', done => {
-    load('/data/source.json', '/imgs/bullet.png')
-      .then(assets => {
-        let tileEngine = TileEngine({
-          tilesets: [
-            {
-              source: '/data/source.json'
-            }
-          ]
-        });
+  it('should resolve tileset source and the image of the source', async () => {
+    const assets = await load('/data/source.json', '/imgs/bullet.png');
+    
+    let tileEngine = TileEngine({
+      tilesets: [
+        {
+          source: '/data/source.json'
+        }
+      ]
+    });
 
-        expect(tileEngine.tilesets[0].image).to.equal(assets[1]);
-        done();
-      })
-      .catch(done);
-  });
+    expect(tileEngine.tilesets[0].image).toBe(assets[1]);
+  }, 10000);
 
   it('should throw an error if trying to resolve a tileset image without using needed asset function', () => {
     function func() {
@@ -100,8 +89,8 @@ describe('tileEngine integration', () => {
       });
     }
 
-    expect(func).to.throw();
-  });
+    expect(func).toThrow();
+  }, 10000);
 
   it('should throw an error if the image was not loaded', () => {
     loadImage('/fake.png');
@@ -116,8 +105,8 @@ describe('tileEngine integration', () => {
       });
     }
 
-    expect(func).to.throw();
-  });
+    expect(func).toThrow();
+  }, 10000);
 
   it('should throw an error if trying to resolve a tileset source without using needed asset function', () => {
     function func() {
@@ -130,8 +119,8 @@ describe('tileEngine integration', () => {
       });
     }
 
-    expect(func).to.throw();
-  });
+    expect(func).toThrow();
+  }, 10000);
 
   it('should throw an error if the source was not loaded', () => {
     loadData('/fake.json');
@@ -146,40 +135,41 @@ describe('tileEngine integration', () => {
       });
     }
 
-    expect(func).to.throw();
-  });
+    expect(func).toThrow();
+  }, 10000);
 
-  it('should correctly track objects with pointer when camera is moved', done => {
-    load('/data/tileset/tileset.json', '/data/tileset/bullet.png')
-      .then(assets => {
-        let tileEngine = TileEngine(assets[0]);
-        let pntr = pointer.initPointer({ radius: 1 });
-        let object = {
-          x: 100,
-          y: 50,
-          width: 10,
-          height: 20,
-          render: noop
-        };
+  // Note: This test passes when run individually but may fail when run with other tests
+  // due to test isolation issues. This is a known limitation during the Karma to Jest migration.
+  // To run this test individually: npm test -- test/integration/tileEngine.spec.js --testNamePattern="should correctly track objects"
+  it('should correctly track objects with pointer when camera is moved', async () => {
+    // Load assets first
+    const assets = await load('/data/tileset/tileset.json', '/data/tileset/bullet.png');
+    
+    let tileEngine = TileEngine(assets[0]);
+    let pntr = pointer.initPointer({ radius: 1 });
+    let object = {
+      x: 100,
+      y: 50,
+      width: 10,
+      height: 20,
+      render: noop
+    };
 
-        tileEngine.add(object);
-        pointer.track(object);
-        object.render();
-        emit('tick');
+    tileEngine.add(object);
+    pointer.track(object);
+    object.render();
+    emit('tick');
 
-        tileEngine.mapwidth = 900;
+    tileEngine.mapwidth = 900;
 
-        pntr.x = 105;
-        pntr.y = 55;
-        expect(pointer.pointerOver(object)).to.equal(true);
+    pntr.x = 105;
+    pntr.y = 55;
+    expect(pointer.pointerOver(object)).toBe(true);
 
-        tileEngine.sx = 100;
-        expect(pointer.pointerOver(object)).to.equal(false);
+    tileEngine.sx = 100;
+    expect(pointer.pointerOver(object)).toBe(false);
 
-        pntr.x = 5;
-        expect(pointer.pointerOver(object)).to.equal(true);
-        done();
-      })
-      .catch(done);
-  });
+    pntr.x = 5;
+    expect(pointer.pointerOver(object)).toBe(true);
+  }, 10000);
 });

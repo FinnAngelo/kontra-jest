@@ -28,12 +28,12 @@ describe(
       let spy;
 
       it('should call init', () => {
-        spy = sinon.spy(Updatable.prototype, 'init');
+        spy = jest.spyOn(Updatable.prototype, 'init');
 
         let props = {};
         object = new Updatable(props);
 
-        expect(spy.calledWith(props)).to.be.true;
+        expect(spy).toHaveBeenCalledWith(props);
       });
     });
 
@@ -42,43 +42,42 @@ describe(
     // --------------------------------------------------
     describe('init', () => {
       it('should default position', () => {
-        expect(object.position instanceof VectorClass).to.be.true;
-        expect(object.position.x).to.equal(0);
-        expect(object.position.y).to.equal(0);
+        expect(object.position instanceof VectorClass).toBe(true);
+        expect(object.position.x).toBe(0);
+        expect(object.position.y).toBe(0);
       });
 
       if (testContext.GAMEOBJECT_VELOCITY) {
         it('should default velocity', () => {
-          expect(object.velocity instanceof VectorClass).to.be.true;
-          expect(object.velocity.x).to.equal(0);
-          expect(object.velocity.y).to.equal(0);
+          expect(object.velocity instanceof VectorClass).toBe(true);
+          expect(object.velocity.x).toBe(0);
+          expect(object.velocity.y).toBe(0);
         });
       } else {
         it('should not have velocity', () => {
-          expect(object.velocity).to.not.exist;
+          expect(object.velocity).toBeUndefined();
         });
       }
 
       if (testContext.GAMEOBJECT_ACCELERATION) {
         it('should default acceleration', () => {
-          expect(object.acceleration instanceof VectorClass).to.be
-            .true;
-          expect(object.acceleration.x).to.equal(0);
-          expect(object.acceleration.y).to.equal(0);
+          expect(object.acceleration instanceof VectorClass).toBe(true);
+          expect(object.acceleration.x).toBe(0);
+          expect(object.acceleration.y).toBe(0);
         });
       } else {
         it('should not have acceleration', () => {
-          expect(object.acceleration).to.not.exist;
+          expect(object.acceleration).toBeUndefined();
         });
       }
 
       if (testContext.GAMEOBJECT_TTL) {
         it('should default ttl', () => {
-          expect(object.ttl).to.equal(Infinity);
+          expect(object.ttl).toBe(Infinity);
         });
       } else {
         it('should not have ttl', () => {
-          expect(object.ttl).to.not.exist;
+          expect(object.ttl).toBeUndefined();
         });
       }
 
@@ -86,8 +85,8 @@ describe(
         it('should set dx and dy properties', () => {
           object = new Updatable({ dx: 10, dy: 20 });
 
-          expect(object.velocity.x).to.equal(10);
-          expect(object.velocity.y).to.equal(20);
+          expect(object.velocity.x).toBe(10);
+          expect(object.velocity.y).toBe(20);
         });
       }
 
@@ -95,8 +94,8 @@ describe(
         it('should set ddx and ddy properties', () => {
           object = new Updatable({ ddx: 10, ddy: 20 });
 
-          expect(object.acceleration.x).to.equal(10);
-          expect(object.acceleration.y).to.equal(20);
+          expect(object.acceleration.x).toBe(10);
+          expect(object.acceleration.y).toBe(20);
         });
       }
 
@@ -104,14 +103,14 @@ describe(
         it('should set ttl property', () => {
           object = new Updatable({ ttl: 20 });
 
-          expect(object.ttl).to.equal(20);
+          expect(object.ttl).toBe(20);
         });
       }
 
       it('should set any property', () => {
         object = new Updatable({ myProp: 'foo' });
 
-        expect(object.myProp).to.equal('foo');
+        expect(object.myProp).toBe('foo');
       });
     });
 
@@ -123,25 +122,25 @@ describe(
         it('should set the velocity x property', () => {
           object.dx = 10;
 
-          expect(object.velocity.x).to.equal(10);
+          expect(object.velocity.x).toBe(10);
         });
 
         it('should return the velocity x property', () => {
           object.velocity.x = 10;
 
-          expect(object.dx).to.equal(10);
+          expect(object.dx).toBe(10);
         });
 
         it('should set the velocity y property', () => {
           object.dy = 10;
 
-          expect(object.velocity.y).to.equal(10);
+          expect(object.velocity.y).toBe(10);
         });
 
         it('should return the velocity y property', () => {
           object.velocity.y = 10;
 
-          expect(object.dy).to.equal(10);
+          expect(object.dy).toBe(10);
         });
       });
     }
@@ -154,25 +153,25 @@ describe(
         it('should set the acceleration x property', () => {
           object.ddx = 10;
 
-          expect(object.acceleration.x).to.equal(10);
+          expect(object.acceleration.x).toBe(10);
         });
 
         it('should return the acceleration x property', () => {
           object.acceleration.x = 10;
 
-          expect(object.ddx).to.equal(10);
+          expect(object.ddx).toBe(10);
         });
 
         it('should set the acceleration y property', () => {
           object.ddy = 10;
 
-          expect(object.acceleration.y).to.equal(10);
+          expect(object.acceleration.y).toBe(10);
         });
 
         it('should return the acceleration y property', () => {
           object.acceleration.y = 10;
 
-          expect(object.ddy).to.equal(10);
+          expect(object.ddy).toBe(10);
         });
       });
     }
@@ -185,17 +184,17 @@ describe(
         it('should return true if ttl is above 0', () => {
           object.ttl = 20;
 
-          expect(object.isAlive()).to.be.true;
+          expect(object.isAlive()).toBe(true);
         });
 
         it('should return true if ttl is less than 0', () => {
           object.ttl = 0;
 
-          expect(object.isAlive()).to.be.false;
+          expect(object.isAlive()).toBe(false);
 
           object.ttl = -20;
 
-          expect(object.isAlive()).to.be.false;
+          expect(object.isAlive()).toBe(false);
         });
       });
     }
@@ -205,19 +204,19 @@ describe(
     // --------------------------------------------------
     describe('update', () => {
       it('should call the advance function', () => {
-        sinon.stub(object, 'advance');
+        jest.spyOn(object, 'advance').mockImplementation(() => {});
 
         object.update();
 
-        expect(object.advance.called).to.be.true;
+        expect(object.advance).toHaveBeenCalled();
       });
 
       it('should pass dt', () => {
-        sinon.stub(object, 'advance');
+        jest.spyOn(object, 'advance').mockImplementation(() => {});
 
         object.update(1 / 60);
 
-        expect(object.advance.calledWith(1 / 60)).to.be.true;
+        expect(object.advance).toHaveBeenCalledWith(1 / 60);
       });
     });
 
@@ -235,8 +234,8 @@ describe(
 
           object.advance();
 
-          expect(object.velocity.x).to.equal(20);
-          expect(object.velocity.y).to.equal(30);
+          expect(object.velocity.x).toBe(20);
+          expect(object.velocity.y).toBe(30);
         });
 
         if (testContext.VECTOR_SCALE) {
@@ -246,8 +245,8 @@ describe(
 
             object.advance(0.5);
 
-            expect(object.velocity.x).to.equal(10);
-            expect(object.velocity.y).to.equal(20);
+            expect(object.velocity.x).toBe(10);
+            expect(object.velocity.y).toBe(20);
           });
         } else {
           it('should not use dt to scale the acceleration', () => {
@@ -256,8 +255,8 @@ describe(
 
             object.advance(0.5);
 
-            expect(object.velocity.x).to.equal(20);
-            expect(object.velocity.y).to.equal(30);
+            expect(object.velocity.x).toBe(20);
+            expect(object.velocity.y).toBe(30);
           });
         }
       }
@@ -269,8 +268,8 @@ describe(
 
           object.advance();
 
-          expect(object.position.x).to.equal(20);
-          expect(object.position.y).to.equal(30);
+          expect(object.position.x).toBe(20);
+          expect(object.position.y).toBe(30);
         });
 
         if (testContext.VECTOR_SCALE) {
@@ -280,8 +279,8 @@ describe(
 
             object.advance(0.5);
 
-            expect(object.position.x).to.equal(10);
-            expect(object.position.y).to.equal(20);
+            expect(object.position.x).toBe(10);
+            expect(object.position.y).toBe(20);
           });
         } else {
           it('should not use dt to scale the velocity', () => {
@@ -290,8 +289,8 @@ describe(
 
             object.advance(0.5);
 
-            expect(object.position.x).to.equal(20);
-            expect(object.position.y).to.equal(30);
+            expect(object.position.x).toBe(20);
+            expect(object.position.y).toBe(30);
           });
         }
       } else {
@@ -301,8 +300,8 @@ describe(
 
           object.advance();
 
-          expect(object.position.x).to.equal(5);
-          expect(object.position.y).to.equal(10);
+          expect(object.position.x).toBe(5);
+          expect(object.position.y).toBe(10);
         });
       }
 
@@ -312,7 +311,7 @@ describe(
 
           object.advance();
 
-          expect(object.ttl).to.equal(9);
+          expect(object.ttl).toBe(9);
         });
       } else {
         it('should not modify the ttl', () => {
@@ -320,7 +319,7 @@ describe(
 
           object.advance();
 
-          expect(object.ttl).to.equal(10);
+          expect(object.ttl).toBe(10);
         });
       }
     });

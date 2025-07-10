@@ -17,9 +17,9 @@ describe('core', () => {
   // --------------------------------------------------
   describe('init', () => {
     it('should export api', () => {
-      expect(core.init).to.be.an('function');
-      expect(core.getCanvas).to.be.an('function');
-      expect(core.getContext).to.be.an('function');
+      expect(typeof core.init).toBe('function');
+      expect(typeof core.getCanvas).toBe('function');
+      expect(typeof core.getContext).toBe('function');
     });
 
     it('should log an error if no canvas element exists', () => {
@@ -27,7 +27,7 @@ describe('core', () => {
         core.init();
       }
 
-      expect(func).to.throw();
+      expect(func).toThrow();
     });
 
     it('should set the canvas when passed no arguments', () => {
@@ -38,7 +38,7 @@ describe('core', () => {
 
       core.init();
 
-      expect(core.getCanvas()).to.equal(canvas);
+      expect(core.getCanvas()).toBe(canvas);
     });
 
     it('should set the canvas when passed an id', () => {
@@ -50,7 +50,7 @@ describe('core', () => {
 
       core.init('game');
 
-      expect(core.getCanvas()).to.equal(canvas);
+      expect(core.getCanvas()).toBe(canvas);
     });
 
     it('should set the canvas when passed a canvas element', () => {
@@ -62,7 +62,7 @@ describe('core', () => {
 
       core.init(canvas);
 
-      expect(core.getCanvas()).to.equal(canvas);
+      expect(core.getCanvas()).toBe(canvas);
     });
 
     it('should set the context from the canvas', () => {
@@ -74,20 +74,23 @@ describe('core', () => {
 
       core.init(canvas);
 
-      expect(core.getContext().canvas).to.equal(canvas);
+      expect(core.getContext().canvas).toBe(canvas);
     });
 
-    it('should emit the init event', done => {
+    it('should emit the init event', async () => {
       let canvas = document.createElement('canvas');
       canvas.width = 600;
       canvas.height = 600;
       canvas.id = 'game2';
       document.body.appendChild(canvas);
 
-      on('init', done);
+      const initPromise = new Promise(resolve => {
+        on('init', resolve);
+      });
+
       core.init();
 
-      throw new Error('should not get here');
+      await initPromise;
     });
 
     it('should return the canvas and context', () => {
@@ -99,8 +102,8 @@ describe('core', () => {
 
       let { canvas, context } = core.init();
 
-      expect(canvas).to.equal(c);
-      expect(context).to.equal(c.getContext('2d'));
+      expect(canvas).toBe(c);
+      expect(context).toBe(c.getContext('2d'));
     });
 
     it('should allow contextless option', () => {
@@ -108,8 +111,8 @@ describe('core', () => {
         contextless: true
       });
 
-      expect(canvas._proxy).to.be.true;
-      expect(context._proxy).to.be.true;
+      expect(canvas._proxy).toBe(true);
+      expect(context._proxy).toBe(true);
 
       function fn() {
         canvas.getContext('2d');
@@ -121,7 +124,7 @@ describe('core', () => {
         context.doesNotExist();
       }
 
-      expect(fn).to.not.throw();
+      expect(fn).not.toThrow();
     });
   });
 });
