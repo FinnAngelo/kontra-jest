@@ -1,3 +1,6 @@
+**Archived: this fork was to help the kontra project migrate to jest, but they are probably going in the web test runner direction.  
+Its likely I'm the only one who ever used this; if you find it helpful, cool!**
+
 [![Version](https://badge.fury.io/js/kontra.svg)](https://badge.fury.io/js/kontra)
 [![Build Status](https://github.com/straker/kontra/actions/workflows/tests.yml/badge.svg)](https://github.com/straker/kontra/actions)
 
